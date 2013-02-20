@@ -1,8 +1,4 @@
 progc
-=====
-
-progc for LAN course
-
 
 Run make to compile the project.
 
