@@ -16,7 +16,7 @@ typedef int bool;
 #define false 0
 
 class ChatClient {
-    int main(int argc, char *argv[]) {
+    int run(int argc, char *argv[]) {
         char* my_string;
         char* p;
         bool safe_to_connect = false;
@@ -177,4 +177,8 @@ class ChatClient {
         printf("\t\tExample: \n");
         printf("\t\t\tquit\n\n");
     }
+};
+
+int main(int argc, char* argv[]) {
+	ChatClient::run(argc, argv);
 }
