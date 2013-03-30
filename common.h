@@ -25,5 +25,7 @@ typedef struct {
     int payload[MAX_PACKET_SIZE];
 } Packet;
 
+struct sockaddr_in cliaddr, servaddr;
+
 
 
