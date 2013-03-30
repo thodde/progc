@@ -3,10 +3,10 @@
 
 ChatServer::ChatServer() {
     printf("%s\n\n", "");
-    printf("%s\n", "-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-");
-    printf("%s\n", "\tWelcome to the Chat Room: Server Side!");
-    printf("%s\n", "\t A Simple Chat Application by Team 6");
-    printf("%s\n", "-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-");
+    printf("-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-\n");
+    printf("\tWelcome to the Chat Room: Server Side!\n");
+    printf("\t A Simple Chat Application by Team 6\n");
+    printf("-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-\n");
     printf("%s\n\n", "");
 }
 
@@ -23,8 +23,6 @@ int ChatServer::run(int argc, char *argv[]) {
         return 0;
 }
 
-/*
 int main(int argc, char *argv[]) {
 	
 }
-*/

@@ -15,10 +15,6 @@
 
 #define MAXLINE 4096   /*max text line length*/
 
-typedef int bool;
-#define true 1
-#define false 0
-
 class ChatClient {
     //command line parameters
     public:

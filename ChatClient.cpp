@@ -8,6 +8,10 @@ int ChatClient::run(int argc, char *argv[]) {
         char recvline[MAXLINE];
         size_t num_bytes = 100;
         int bytes_read;
+        int sockfd;
+        struct hostent* lh;
+        struct in_addr** addr_list;
+        struct sockaddr_in servaddr;
 
         //display a nice interface
         printf("%s\n\n", "");
