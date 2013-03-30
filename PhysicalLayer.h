@@ -12,7 +12,7 @@
 
 class PhysicalLayer {
 public:
-    PhysicalLayer(bool newIsServer, int isPort, DatalinkLayer *newDLL);
+    PhysicalLayer(bool newIsServer, int newPort, DatalinkLayer *newDLL);
 
     bool sendFrame(Frame *outFrame);
     bool receivePacket(Packet *inPacket);
