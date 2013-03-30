@@ -73,7 +73,7 @@ int ChatClient::run(int argc, char *argv[]) {
 
 				    memset(&servaddr, 0, sizeof(servaddr));
 				    servaddr.sin_family = AF_INET;
-				    servaddr.sin_addr.s_addr = inet_addr(inet_ntoa(*addr_list[0]));
+				    servaddr.sin_addr.s_addr = "12.34.56.7"; //inet_addr(inet_ntoa(*addr_list[0]));
 				    servaddr.sin_port =  htons(port);
 	
 				    //Connection of the client to the socket
