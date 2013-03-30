@@ -18,6 +18,8 @@ public:
     bool receivePacket(Packet *inPacket);
 
 private:
+    //bool createPacketsFromFrame(Frame )
+
     int port;
     bool isServer;
     DatalinkLayer myDLL;
