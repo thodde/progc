@@ -13,7 +13,13 @@
 
 class DatalinkLayer {
 public:
-    DatalinkLayer();
+
+    DatalinkLayer(); //will need a link to the ApplicationClient
+
+    bool sendMessage(Message *newMessage);
+
+
+private:
 };
 
 #endif

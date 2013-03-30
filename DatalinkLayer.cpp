@@ -9,3 +9,8 @@ bool sendMessage(Message *outMessage) {
 DatalinkLayer::DatalinkLayer() {
     printf("hello world, this is the datalink layer\n");
 };
+
+
+bool DatalinkLayer::sendMessage(Message *newMessage) {
+    return true;
+}
