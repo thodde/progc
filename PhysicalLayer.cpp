@@ -8,8 +8,12 @@ bool sendFrame(Frame *outFrame) {
  */
 
 
-PhysicalLayer::PhysicalLayer(bool newIsServer, int isPort, DatalinkLayer *newDLL) {
+PhysicalLayer::PhysicalLayer(bool newIsServer, int newPort, DatalinkLayer *newDLL) {
     printf("Hello world!  I'm a Physical Layer\n");
+    isServer = newIsServer;
+    port = newPort;
+    myDLL = *newDLL;
+
     return;
 }
 
