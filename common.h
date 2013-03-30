@@ -1,5 +1,3 @@
-
-
 #define     MAX_FRAME_SIZE          192
 #define     MAX_PACKET_SIZE         100
 #define     MESSAGE_INITIATOR       1
@@ -24,8 +22,4 @@ typedef struct {
     Packet_Kind type;
     int payload[MAX_PACKET_SIZE];
 } Packet;
-
-struct sockaddr_in cliaddr, servaddr;
-
-
 

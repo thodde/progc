@@ -7,8 +7,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#define MAX_CLIENTS 10
-
 int port;
 
 int main(int argc, char *argv[]) {
