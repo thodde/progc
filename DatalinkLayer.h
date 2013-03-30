@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 
 #include "common.h"
+#include "Message.h"
 //#include "PhysicalLayer.h"
 
 class DatalinkLayer {

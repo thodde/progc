@@ -1,10 +1,10 @@
-all: ChatServer ChatClient DatalinkLayer PhysicalLayer
+all: ChatServer ChatClient
 
-ChatServer: ChatServer.o DatalinkLayer.o PhysicalLayer.o
-	g++ -o ChatServer ChatServer.o DatalinkLayer.o PhysicalLayer.o
+ChatServer: ChatServer.o DatalinkLayer.o PhysicalLayer.o Message.o
+	g++ -o ChatServer ChatServer.o DatalinkLayer.o PhysicalLayer.o Message.o
 
-ChatClient: ChatClient.o DatalinkLayer.o PhysicalLayer.o
-	g++ -o ChatClient ChatClient.o DatalinkLayer.o PhysicalLayer.o
+ChatClient: ChatClient.o DatalinkLayer.o PhysicalLayer.o Message.o
+	g++ -o ChatClient ChatClient.o DatalinkLayer.o PhysicalLayer.o Message.o
 
 common.o: common.cpp
 	g++ -c common.cpp
@@ -20,6 +20,9 @@ DatalinkLayer.o: DatalinkLayer.cpp
 
 PhysicalLayer.o: PhysicalLayer.cpp
 	g++ -c PhysicalLayer.cpp
+
+Message.o: Message.cpp
+	g++ -c Message.cpp
 
 clean:
 	rm -rf *o ChatClient ChatServer common DatalinkLayer PhysicalLayer

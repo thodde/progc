@@ -4,7 +4,7 @@ int ChatClient::run(int argc, char *argv[]) {
         char* my_string;
         char* p;
         bool safe_to_connect = false;
-        char sendline[MAXLINE];
+        char *sendline = new char[MAXLINE];
         char recvline[MAXLINE];
         size_t num_bytes = 100;
         int bytes_read;
@@ -63,7 +63,7 @@ int ChatClient::run(int argc, char *argv[]) {
                     printf("Connecting to server...\n");
                     safe_to_connect = true;
 
-                    Message* m = new Message(Message_Join, sendline);
+                    Message *m = new Message();
                     dll->sendMessage(m);
                 }
                 else {
@@ -147,7 +147,8 @@ void ChatClient::show_help() {
         printf("\t\t\tquit\n\n");
 }
 
-/*
+
 int main(int argc, char* argv[]) {
-	ChatClient::run(argc, argv);
-}*/
+	ChatClient cc = ChatClient();
+	cc.run(argc, argv);
+}

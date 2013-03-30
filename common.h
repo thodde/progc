@@ -8,18 +8,9 @@
 #define     PACKET_END              23
 //#define
 
-typedef enum { Message_Join, Message_Kick, Message_Whisper } Message_Type;
 typedef enum { Frame_Init, Frame_Data, Frame_Ack, Frame_Final } Frame_Type;
 typedef enum { Packet_Init, Packet_Data, Packet_Ack, Packet_Final } Packet_Type;
 
-class Message {
-public:
-    Message_Type type;
-    char *data;
-
-public:
-    Message(Message_Type type, char* message);
-};
 
 class Frame {
 public:

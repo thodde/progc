@@ -12,6 +12,7 @@
 
 #include "common.h"
 #include "DatalinkLayer.h"
+#include "Message.h"
 
 #define MAXLINE 4096   /*max text line length*/
 
@@ -24,7 +25,7 @@ class ChatClient {
 
     //funtion prototypes
     public:
-        int run(int argc, char *argv[]);
+        int run(int argc, char* argv[]);
         void show_help();
 };
 #endif
