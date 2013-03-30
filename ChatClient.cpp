@@ -19,7 +19,7 @@ int ChatClient::run(int argc, char *argv[]) {
         printf("%s\n", "\tWelcome to the Chat Room: Client Side!");
         printf("%s\n", "\t A Simple Chat Application by Team 6");
         printf("%s\n", "-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-");
-        printf("%s\n", "");
+        printf("%s\n", ""); 
 
         //make sure the correct number of arguments are specified
         if (argc < 3 || argc > 4) {
@@ -42,6 +42,7 @@ int ChatClient::run(int argc, char *argv[]) {
             error_rate = 0;
         }
 
+        //create an object for accessing the data link layer
         DatalinkLayer* dll = new DatalinkLayer();
 
         printf("To enter the chat room, use the 'join' command.\n");
@@ -63,7 +64,7 @@ int ChatClient::run(int argc, char *argv[]) {
                     printf("Connecting to server...\n");
                     safe_to_connect = true;
 
-                    Message *m = new Message();
+                    Message *m = new Message(Message_Join, sendline);
                     dll->sendMessage(m);
                 }
                 else {
@@ -75,19 +76,29 @@ int ChatClient::run(int argc, char *argv[]) {
             if(safe_to_connect) {
                 if(strncasecmp(sendline, "speak ", 6) == 0) {
                     printf("speak\n");
+                    Message *m = new Message(Message_Speak, sendline);
+                    dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "whisper ", 8) == 0) {
                     printf("whisper\n");
+                    Message *m = new Message(Message_Whisper, sendline);
+                    dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "kick ", 5) == 0) {
                     printf("kick\n");
+                    Message *m = new Message(Message_Kick, sendline);
+                    dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "list", 4) == 0) {
                     printf("list\n");
+                    Message *m = new Message(Message_List, sendline);
+                    dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "quit", 4) == 0) {
-                    printf("Exiting...\n");
-                    exit(0);
+                    printf("Remove this message later...Exiting...\n");
+                    Message *m = new Message(Message_Quit, sendline);
+                    dll->sendMessage(m);
+                    exit(0);       
                 }
                 else if(strncasecmp(sendline, "help", 4) == 0) {
                     show_help();
@@ -105,6 +116,27 @@ int ChatClient::run(int argc, char *argv[]) {
             }
             printf("\n");
         }
+}
+
+void receive_message(Message* m) {
+    if(m->type == Message_Join) {
+        printf("Client joined the chat!\n");
+    }
+    else if(m->type == Message_Speak) {
+        printf("%s\n", m->data);
+    }
+    else if(m->type == Message_Kick) {
+        printf("Client is being removed from the chat room by the administrator!\n");
+    }
+    else if(m->type == Message_Whisper) {
+        printf("Private Message from Client: %s\n", m->data);
+    }
+    else if(m->type == Message_List) {
+        printf("Listing users currently connected to chat room:\n");
+    }
+    else if(m->type == Message_Quit) {
+        printf("Exiting...\n");
+    }
 }
 
 /**
@@ -146,7 +178,6 @@ void ChatClient::show_help() {
         printf("\t\tExample: \n");
         printf("\t\t\tquit\n\n");
 }
-
 
 int main(int argc, char* argv[]) {
 	ChatClient cc = ChatClient();
