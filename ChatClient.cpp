@@ -63,7 +63,7 @@ int ChatClient::run(int argc, char *argv[]) {
                     printf("Connecting to server...\n");
                     safe_to_connect = true;
 
-                    Message *m = new Message();
+                    Message *m = new Message(Message_Join, sendline);
                     dll->sendMessage(m);
                 }
                 else {
@@ -75,18 +75,28 @@ int ChatClient::run(int argc, char *argv[]) {
             if(safe_to_connect) {
                 if(strncasecmp(sendline, "speak ", 6) == 0) {
                     printf("speak\n");
+                    Message *m = new Message(Message_Speak, sendline);
+                    dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "whisper ", 8) == 0) {
                     printf("whisper\n");
+                    Message *m = new Message(Message_Whisper, sendline);
+                    dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "kick ", 5) == 0) {
                     printf("kick\n");
+                    Message *m = new Message(Message_Kick, sendline);
+                    dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "list", 4) == 0) {
                     printf("list\n");
+                    Message *m = new Message(Message_List, sendline);
+                    dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "quit", 4) == 0) {
                     printf("Exiting...\n");
+                    Message *m = new Message(Message_Quit, sendline);
+                    dll->sendMessage(m);
                     exit(0);       
                 }
                 else if(strncasecmp(sendline, "help", 4) == 0) {
@@ -105,6 +115,27 @@ int ChatClient::run(int argc, char *argv[]) {
             }
             printf("\n");
         }
+}
+
+void receive_message(Message* message) {
+    if(message->type == Message_Join) {
+
+    }
+    else if(message->type == Message_Speak) {
+
+    }
+    else if(message->type == Message_Kick) {
+
+    }
+    else if(message->type == Message_Whisper) {
+
+    }
+    else if(message->type == Message_List) {
+
+    }
+    else if(message->type == Message_Quit) {
+
+    }
 }
 
 /**
@@ -146,7 +177,6 @@ void ChatClient::show_help() {
         printf("\t\tExample: \n");
         printf("\t\t\tquit\n\n");
 }
-
 
 int main(int argc, char* argv[]) {
 	ChatClient cc = ChatClient();
