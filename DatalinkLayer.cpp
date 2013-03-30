@@ -14,3 +14,16 @@ DatalinkLayer::DatalinkLayer() {
 bool DatalinkLayer::sendMessage(Message *newMessage) {
     return true;
 }
+
+
+bool DatalinkLayer::receivePacket(Packet *newPacket) {
+    return true;
+}
+
+void DatalinkLayer::convertMessageToFrame(Message *inMessage) {
+    return;
+}
+
+void DatalinkLayer::convertPacketToFrame(Packet *inPacket) {
+    return;
+}

@@ -18,9 +18,13 @@ public:
     DatalinkLayer(); //will need a link to the ApplicationClient
 
     bool sendMessage(Message *newMessage);
+    bool receivePacket(Packet *newPacket);
 
 
 private:
+    void convertMessageToFrame(Message *inMessage);
+    //this won't work, as it takes several packets to create a frame, but it's a start...
+    void convertPacketToFrame(Packet *inPacket);
 };
 
 #endif

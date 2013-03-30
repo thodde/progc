@@ -2,7 +2,9 @@
 #define __PHY_LAYER_H___
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,16 +14,16 @@
 
 class PhysicalLayer {
 public:
-    PhysicalLayer(bool newIsServer, int newPort, DatalinkLayer *newDLL);
+    PhysicalLayer(int newPort, DatalinkLayer *newDLL);
 
     bool sendFrame(Frame *outFrame);
-    bool receivePacket(Packet *inPacket);
+    bool beginListening();
+    bool receiveData();
 
 private:
-    //bool createPacketsFromFrame(Frame )
+    void convertFrameToPacket(Frame *inFrame);
 
     int port;
-    bool isServer;
     DatalinkLayer myDLL;
 };
 

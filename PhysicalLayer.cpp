@@ -8,9 +8,8 @@ bool sendFrame(Frame *outFrame) {
  */
 
 
-PhysicalLayer::PhysicalLayer(bool newIsServer, int newPort, DatalinkLayer *newDLL) {
+PhysicalLayer::PhysicalLayer(int newPort, DatalinkLayer *newDLL) {
     printf("Hello world!  I'm a Physical Layer\n");
-    isServer = newIsServer;
     port = newPort;
     myDLL = *newDLL;
 
@@ -21,49 +20,74 @@ bool PhysicalLayer::sendFrame(Frame *outFrame) {
     return false;
 }
 
-bool PhysicalLayer::receivePacket(Packet *inPacket) {
+bool PhysicalLayer::receiveData() {
     return false;
 }
 
-/*
 
-int run(int port_dll, int port_listening) {
-    printf("my dll is at port: %i and I'm listening on port: %i\n", port_dll, port_listening);
-
-    int listen_sd = socket(AF_INET, SOCK_STREAM, 0);
-
-    struct sockaddr_in cliaddr, servaddr;
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(SERV_PORT);
-
-    bind(listenfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
-
-    listen(listenfd, LISTENQ);
-
-    printf("%s\n","Server running...waiting for connections.");
-
-    clilen = sizeof(cliaddr);
-    connfd = accept(listenfd, (struct sockaddr *) &cliaddr, &clilen);
-
-    while (1) {
-        break;
-    }
-
-    return 0;
+void PhysicalLayer::convertFrameToPacket(Frame *inFrame) {
+    return;
 }
 
-int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        printf("please initialize the physical layer using the following:\n");
-        printf("\tphy_layer listening_port dll_port\n");
-        return(-1);
+
+bool PhysicalLayer::beginListening() {
+    printf("I'm listening on port: %i\n", port);
+
+    int sockfd, newsockfd, portno;
+    socklen_t clilen;
+    char buffer[256];
+    struct sockaddr_in serv_addr, cli_addr;
+    int n;
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        printf("Physical Layer ERROR opening socket\n");
+        return false;
     }
 
-    int port_server = atoi(argv[2]);
-    int port_dll = atoi(argv[3]);
+    bzero((char *) &serv_addr, sizeof(serv_addr));
 
-    return run(port_dll, port_server);
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = port;
+
+    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        printf("Physical Layer ERROR on binding\n");
+        return false;
+    }
+
+    listen(sockfd,5);
+    clilen = sizeof(cli_addr);
+    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+
+    if (newsockfd < 0) {
+        printf("Physical Layer ERROR on accept\n");
+        return false;
+    }
+
+    bzero(buffer,256);
+    n = read(newsockfd,buffer,255);
+
+//process until a complete packet has been received
+//send up to datalink layer only after a full
+    if (n < 0) {
+        printf("Physical Layer ERROR reading from socket\n");
+        return false;
+    }
+
+    printf("Physical Layer message received: %s\n",buffer);
+
+//override this here
+    n = write(newsockfd,"I got your message",18);
+
+    if (n < 0) {
+        printf("Physical Layer ERROR writing to socket\n");
+        return false;
+    }
+
+
+    close(newsockfd);
+    close(sockfd);
+    return 0;
 };
-*/
 
