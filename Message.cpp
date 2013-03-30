@@ -2,7 +2,6 @@
 #include "Message.h"
 
 
-Message::Message() {
-    return;
+Message::Message(Message_Type type, char* data) {
 
 };
