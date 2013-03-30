@@ -1,5 +1,3 @@
-This is a test.
-
 progc
 
 Run make to compile the project.
