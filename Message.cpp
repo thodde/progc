@@ -2,6 +2,6 @@
 #include "Message.h"
 
 
-Message::Message(Message_Type type, char* message) {
+Message::Message(Message_Type type, char* data) {
 
 };

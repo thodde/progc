@@ -94,7 +94,7 @@ int ChatClient::run(int argc, char *argv[]) {
                     dll->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "quit", 4) == 0) {
-                    printf("Exiting...\n");
+                    printf("Remove this message later...Exiting...\n");
                     Message *m = new Message(Message_Quit, sendline);
                     dll->sendMessage(m);
                     exit(0);       
@@ -117,24 +117,24 @@ int ChatClient::run(int argc, char *argv[]) {
         }
 }
 
-void receive_message(Message* message) {
-    if(message->type == Message_Join) {
-
+void receive_message(Message* m) {
+    if(m->type == Message_Join) {
+        printf("Client joined the chat!\n");
     }
-    else if(message->type == Message_Speak) {
-
+    else if(m->type == Message_Speak) {
+        printf("%s\n", m->data);
     }
-    else if(message->type == Message_Kick) {
-
+    else if(m->type == Message_Kick) {
+        printf("Client is being removed from the chat room by the administrator!\n");
     }
-    else if(message->type == Message_Whisper) {
-
+    else if(m->type == Message_Whisper) {
+        printf("Private Message from Client: %s\n", m->data);
     }
-    else if(message->type == Message_List) {
-
+    else if(m->type == Message_List) {
+        printf("Listing users currently connected to chat room:\n");
     }
-    else if(message->type == Message_Quit) {
-
+    else if(m->type == Message_Quit) {
+        printf("Exiting...\n");
     }
 }
 

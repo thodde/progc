@@ -9,7 +9,7 @@ typedef enum { Message_Join, Message_Kick, Message_Whisper, Message_Speak, Messa
 
 class Message {
 public:
-    Message(Message_Type type, char* message);
+    Message(Message_Type type, char* data);
 
     Message_Type type;
     char *data;
