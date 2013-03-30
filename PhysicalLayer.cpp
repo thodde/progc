@@ -1,11 +1,5 @@
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
-#include "common.h"
-#include "phy_layer.h"
+#include "PhysicalLayer.h"
 
 /*
 bool sendFrame(Frame *outFrame) {
@@ -13,6 +7,21 @@ bool sendFrame(Frame *outFrame) {
 };
  */
 
+
+PhysicalLayer::PhysicalLayer(bool newIsServer, int isPort, DatalinkLayer *newDLL) {
+    printf("Hello world!  I'm a Physical Layer\n");
+    return;
+}
+
+bool PhysicalLayer::sendFrame(Frame *outFrame) {
+    return false;
+}
+
+bool PhysicalLayer::receivePacket(Packet *inPacket) {
+    return false;
+}
+
+/*
 
 int run(int port_dll, int port_listening) {
     printf("my dll is at port: %i and I'm listening on port: %i\n", port_dll, port_listening);
@@ -52,3 +61,5 @@ int main(int argc, char *argv[]) {
 
     return run(port_dll, port_server);
 };
+*/
+

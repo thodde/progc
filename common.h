@@ -1,3 +1,7 @@
+
+#ifndef __COMMON_H__
+#define __COMMON_H__
+
 #define     MAX_FRAME_SIZE          192
 #define     MAX_PACKET_SIZE         100
 #define     MESSAGE_INITIATOR       1
@@ -23,3 +27,5 @@ typedef struct {
     int payload[MAX_PACKET_SIZE];
 } Packet;
 
+
+#endif
