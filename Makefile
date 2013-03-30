@@ -18,7 +18,7 @@ ChatClient.o: ChatClient.cpp common.o
 DatalinkLayer.o: DatalinkLayer.cpp
 	g++ -c DatalinkLayer.cpp
 
-phy_layer.o: PhysicalLayer.cpp
+PhysicalLayer.o: PhysicalLayer.cpp
 	g++ -c PhysicalLayer.cpp
 
 clean:
