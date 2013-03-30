@@ -42,6 +42,8 @@ int ChatClient::run(int argc, char *argv[]) {
             error_rate = 0;
         }
 
+        DatalinkLayer* dll = new DatalinkLayer();
+
         printf("To enter the chat room, use the 'join' command.\n");
 
         while(1) {
@@ -60,30 +62,8 @@ int ChatClient::run(int argc, char *argv[]) {
                 if(!safe_to_connect) {
                     printf("Connecting to server...\n");
                     safe_to_connect = true;
-
-                    //Create a socket for the client
-				    if ((sockfd = socket (AF_INET, SOCK_STREAM, 0)) <0) {
-					    perror("Problem in creating the socket");
-					    exit(2);
-				    }
-
-				    //get the hostname from the command line and grab the associated ip addresses
-				    lh = gethostbyname(hostname);
-				    addr_list = (struct in_addr **)lh->h_addr_list;
-
-				    memset(&servaddr, 0, sizeof(servaddr));
-				    servaddr.sin_family = AF_INET;
-				    servaddr.sin_addr.s_addr = inet_addr(inet_ntoa(*addr_list[0]));
-				    servaddr.sin_port =  htons(port);
-	
-				    //Connection of the client to the socket
-				    if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr))<0) {
-					    perror("Problem in connecting to the server");
-					    exit(3);
-				    }
-
-				    //send the command
-		        		send(sockfd, sendline, strlen(sendline), 0);
+                    Message* m = new Message(Message_Join, sendline);
+                    dll->sendMessage(m);
                 }
                 else {
                     printf("You already connected!!!\n");
