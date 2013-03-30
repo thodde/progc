@@ -1,22 +1,6 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
 #include "ChatClient.h"
 
-#define MAXLINE 4096   /*max text line length*/
-
-typedef int bool;
-#define true 1
-#define false 0
-
-class ChatClient {
-    int run(int argc, char *argv[]) {
+int ChatClient::run(int argc, char *argv[]) {
         char* my_string;
         char* p;
         bool safe_to_connect = false;
@@ -136,13 +120,13 @@ class ChatClient {
             }
             printf("\n");
         }
-    }
+}
 
-    /**
-     *  This function displays a list of command usages for the supported
-     *  chat room commands.
-     */
-    void show_help() {
+/**
+ *  This function displays a list of command usages for the supported
+ *  chat room commands.
+ */
+void ChatClient::show_help() {
         printf("List of valid commands for the chat room:\n\n");
         printf("\t- Join - Allow a user to join the chat room. Must specify a user name.\n");
         printf("\t\tExample: \n");
@@ -176,9 +160,9 @@ class ChatClient {
         printf("\t- Quit - Allow a user to exit the chat room on their own free will.\n");
         printf("\t\tExample: \n");
         printf("\t\t\tquit\n\n");
-    }
-};
+}
 
+/*
 int main(int argc, char* argv[]) {
 	ChatClient::run(argc, argv);
-}
+}*/

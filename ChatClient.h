@@ -1,9 +1,34 @@
-//command line parameters
-public:
-    int port;
-    char* hostname;
-    int error_rate;
+#ifndef __CHAT_CLIENT_H___
+#define __CHAT_CLIENT_H___
 
-//funtion prototypes
-public:
-    void show_help();
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+#include "common.h"
+#include "DatalinkLayer.h"
+
+#define MAXLINE 4096   /*max text line length*/
+
+typedef int bool;
+#define true 1
+#define false 0
+
+class ChatClient {
+    //command line parameters
+    public:
+        int port;
+        char* hostname;
+        int error_rate;
+
+    //funtion prototypes
+    public:
+        int run(int argc, char *argv[]);
+        void show_help();
+};
+#endif
