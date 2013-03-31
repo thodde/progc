@@ -20,6 +20,8 @@ public:
 
 class Packet {
 public:
+    Packet();
+
     Packet_Type type;
     int payload[MAX_PACKET_SIZE];
 

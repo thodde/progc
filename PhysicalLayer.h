@@ -15,15 +15,20 @@
 class PhysicalLayer {
 public:
     PhysicalLayer(int newPort, DatalinkLayer *newDLL);
+    ~PhysicalLayer();
 
     bool sendFrame(Frame *outFrame);
     bool beginListening();
     bool receiveData();
 
 private:
-    void convertFrameToPacket(Frame *inFrame);
+    Packet* convertFrameToPacket(Frame *inFrame);
+    int readPacket(char* inString, Packet *outPacket);
+    bool appropriatePort();
+    char* stuffBits(char* inStream);
 
     int port;
+    int listeningSocketFileDescriptor;
     DatalinkLayer myDLL;
 };
 

@@ -22,7 +22,10 @@ public:
 
 
 private:
+    // converts the message from the Application layer to a consumable message by the Datalink Layer
     void convertMessageToFrame(Message *inMessage);
+
+
     //this won't work, as it takes several packets to create a frame, but it's a start...
     void convertPacketToFrame(Packet *inPacket);
 };

@@ -5,7 +5,7 @@
 
 #include "common.h"
 
-typedef enum { Message_Join, Message_Kick, Message_Whisper, Message_Speak, Message_List, Message_Quit } Message_Type;
+typedef enum { Message_Join, Message_Kick, Message_Whisper, Message_Speak, Message_List, Message_Quit, Message_KeepAlive } Message_Type;
 
 class Message {
 public:
