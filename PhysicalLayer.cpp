@@ -8,20 +8,61 @@ bool sendFrame(Frame *outFrame) {
  */
 
 
-PhysicalLayer::PhysicalLayer(int newPort, DatalinkLayer *newDLL) {
-    printf("Hello world!  I'm a Physical Layer\n");
-    port = newPort;
-    myDLL = *newDLL;
-    listeningSocketFileDescriptor = 0;
-
-    return;
+PhysicalLayer::PhysicalLayer() {
+    externalFD = 0;
+    internalFD = 0;
+    externalPort = 0;
 }
 
 PhysicalLayer::~PhysicalLayer() {
-    if (listeningSocketFileDescriptor != 0)
-        close(listeningSocketFileDescriptor);
+    if (externalFD != 0)
+        close(externalFD);
+    if (internalFD != 0)
+        close(internalFD);
 }
 
+
+bool PhysicalLayer::initialize(int portExternal, int portInternal) {
+    printf("Initializing Physical Layer\n");
+    internalFD = 0;
+    externalPort = portExternal;
+
+    internalFD = listenForInternalService(portInternal, "Physical Layer");
+    if (internalFD == 0){
+        printf("Error, closing down\n");
+        return false;
+    }
+
+/*
+    internalDLLFD = connectToInternalService(portInternalDLL, "Datalink Layer");
+    if (internalDLLFD == 0) {
+        printf("Error, closing down\n");
+        return false;
+    }  */
+
+    return true;
+}
+
+
+int main (int argc, char *argv[]) {
+    printf("Starting Physical Layer\n");
+
+    PhysicalLayer *myPH = new PhysicalLayer();
+    if (!myPH->initialize(EXTERNAL_PORT, PH_PORT)) {
+        delete myPH;
+        return -1;
+    }
+
+    //begin main execution loop
+    while (true) {
+       ;
+    }
+
+    delete myPH;
+    return 1;
+}
+
+/*
 bool PhysicalLayer::sendFrame(Frame *outFrame) {
     return false;
 }
@@ -29,32 +70,6 @@ bool PhysicalLayer::sendFrame(Frame *outFrame) {
 bool PhysicalLayer::receiveData() {
     return false;
 }
-
-bool PhysicalLayer::appropriatePort() {
-    if (listeningSocketFileDescriptor != 0)
-        close(listeningSocketFileDescriptor);
-
-    struct sockaddr_in serv_addr;
-
-    listeningSocketFileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-    if (listeningSocketFileDescriptor < 0) {
-        printf("Physical Layer ERROR opening socket\n");
-        return false;
-    }
-
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = port;
-
-    if (bind(listeningSocketFileDescriptor, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        printf("Physical Layer ERROR on binding\n");
-        return false;
-    }
-
-    listen(listeningSocketFileDescriptor, 5);
-};
-
 
 Packet* PhysicalLayer::convertFrameToPacket(Frame *inFrame) {
     //stuff bits
@@ -70,54 +85,6 @@ int PhysicalLayer::readPacket(char* inString, Packet *outPacket) {
 }
 
 
-bool PhysicalLayer::beginListening() {
-    printf("I'm listening on port: %i\n", port);
-
-    appropriatePort();
-
-    socklen_t clilen;
-    struct sockaddr_in cli_addr;
-    clilen = sizeof(cli_addr);
-    int newRequestSocketFileDescriptor;
-    char buffer[1024];
-    int charRead;
-
-    while (1) {
-        newRequestSocketFileDescriptor = accept(listeningSocketFileDescriptor, (struct sockaddr *) &cli_addr, &clilen);
-
-        if (newRequestSocketFileDescriptor < 0) {
-            printf("Physical Layer ERROR on accept\n");
-            return false;
-        }
-
-        bzero(buffer, 1024);
-        charRead = read(newRequestSocketFileDescriptor, buffer, 1024);
-
-        // this portion needs to be rewritten as it is disguising a ACK response
-
-        //process until a complete packet has been received
-        //send up to datalink layer only after a full
-        if (charRead < 0) {
-            printf("Physical Layer ERROR reading from socket\n");
-            return false;
-        }
-
-        printf("Physical Layer message received: %s\n",buffer);
-
-        //override this here
-        charRead = write(newRequestSocketFileDescriptor, "I got your message", 18);
-
-        if (charRead < 0) {
-            printf("Physical Layer ERROR writing to socket\n");
-            return false;
-        }
-
-        close(newRequestSocketFileDescriptor);
-
-    }
-
-    return true;
-};
 
 char* PhysicalLayer::stuffBits(char *inStream) {
     //find sequence
@@ -131,3 +98,5 @@ char* PhysicalLayer::stuffBits(char *inStream) {
     return NULL;
 }
 
+
+*/

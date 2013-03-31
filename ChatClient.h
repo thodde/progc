@@ -11,7 +11,7 @@
 #include <netdb.h>
 
 #include "common.h"
-#include "DatalinkLayer.h"
+#include "NetworkLayer.h"
 #include "Message.h"
 
 #define MAXLINE 4096   /*max text line length*/

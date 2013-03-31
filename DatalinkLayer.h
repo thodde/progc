@@ -9,25 +9,31 @@
 #include <netinet/in.h>
 
 #include "common.h"
-#include "Message.h"
+//#include "Message.h"
 //#include "PhysicalLayer.h"
 
+
+//IP address of next hop, plus info for next level up
 class DatalinkLayer {
 public:
 
-    DatalinkLayer(); //will need a link to the ApplicationClient
+    DatalinkLayer();
+    ~DatalinkLayer();
 
-    bool sendMessage(Message *newMessage);
-    bool receivePacket(Packet *newPacket);
+    bool initialize(int portInternalUp, int portInternalDown);
 
+
+/*
+    bool dl_send(Packet *outPacket);
+    bool dl_recv(Packet *inPacket);
+*/
+
+    // error detection bits
 
 private:
-    // converts the message from the Application layer to a consumable message by the Datalink Layer
-    void convertMessageToFrame(Message *inMessage);
-
-
-    //this won't work, as it takes several packets to create a frame, but it's a start...
-    void convertPacketToFrame(Packet *inPacket);
+    int internalDownFD;
+    int internalUpFD;
+    //NetworkLayer myNL;
 };
 
 #endif

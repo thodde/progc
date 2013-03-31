@@ -10,26 +10,33 @@
 #include <netinet/in.h>
 
 #include "common.h"
-#include "DatalinkLayer.h"
+//#include "DatalinkLayer.h"
 
 class PhysicalLayer {
 public:
-    PhysicalLayer(int newPort, DatalinkLayer *newDLL);
+    PhysicalLayer();
     ~PhysicalLayer();
 
-    bool sendFrame(Frame *outFrame);
-    bool beginListening();
-    bool receiveData();
+    bool initialize(int portExternal, int portInternal);
+
+//    bool beginListening();
+
+    //bool sendFrame(Frame *outFrame);
+    //bool receiveData();
 
 private:
-    Packet* convertFrameToPacket(Frame *inFrame);
-    int readPacket(char* inString, Packet *outPacket);
-    bool appropriatePort();
-    char* stuffBits(char* inStream);
+    int externalPort;
+    int externalFD;
+    int internalFD;
 
-    int port;
-    int listeningSocketFileDescriptor;
-    DatalinkLayer myDLL;
+    //Packet* convertFrameToPacket(Frame *inFrame);
+    //int readPacket(char* inString, Packet *outPacket);
+    //bool appropriatePort();
+    //char* stuffBits(char* inStream);
+
+    //int internalPort;
+    //int listeningSocketFileDescriptor;
+    //DatalinkLayer myDLL;
 };
 
 #endif

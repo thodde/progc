@@ -43,7 +43,7 @@ int ChatClient::run(int argc, char *argv[]) {
         }
 
         //create an object for accessing the data link layer
-        DatalinkLayer* dll = new DatalinkLayer();
+        NetworkLayer* networkLayer = new NetworkLayer();
 
         printf("To enter the chat room, use the 'join' command.\n");
 
@@ -65,7 +65,7 @@ int ChatClient::run(int argc, char *argv[]) {
                     safe_to_connect = true;
 
                     Message *m = new Message(Message_Join, sendline);
-                    dll->sendMessage(m);
+                    networkLayer->sendMessage(m);
                 }
                 else {
                     printf("You already connected!!!\n");
@@ -77,27 +77,27 @@ int ChatClient::run(int argc, char *argv[]) {
                 if(strncasecmp(sendline, "speak ", 6) == 0) {
                     printf("speak\n");
                     Message *m = new Message(Message_Speak, sendline);
-                    dll->sendMessage(m);
+                    networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "whisper ", 8) == 0) {
                     printf("whisper\n");
                     Message *m = new Message(Message_Whisper, sendline);
-                    dll->sendMessage(m);
+                    networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "kick ", 5) == 0) {
                     printf("kick\n");
                     Message *m = new Message(Message_Kick, sendline);
-                    dll->sendMessage(m);
+                    networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "list", 4) == 0) {
                     printf("list\n");
                     Message *m = new Message(Message_List, sendline);
-                    dll->sendMessage(m);
+                    networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "quit", 4) == 0) {
                     printf("Remove this message later...Exiting...\n");
                     Message *m = new Message(Message_Quit, sendline);
-                    dll->sendMessage(m);
+                    networkLayer->sendMessage(m);
                     exit(0);       
                 }
                 else if(strncasecmp(sendline, "help", 4) == 0) {
