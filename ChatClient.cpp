@@ -44,6 +44,10 @@ int ChatClient::run(int argc, char *argv[]) {
 
         //create an object for accessing the data link layer
         NetworkLayer* networkLayer = new NetworkLayer();
+        if(!networkLayer->initialize(DLL_PORT)) {
+            printf("Error, could not connect to internal services layers\n");
+            //This should probable exit out here
+        }
 
         printf("To enter the chat room, use the 'join' command.\n");
 

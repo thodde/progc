@@ -18,6 +18,7 @@ public:
     ~PhysicalLayer();
 
     bool initialize(int portExternal, int portInternal);
+    bool run();
 
 //    bool beginListening();
 

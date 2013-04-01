@@ -44,6 +44,37 @@ bool PhysicalLayer::initialize(int portExternal, int portInternal) {
 }
 
 
+bool PhysicalLayer::run() {
+    char buffer[255];
+    memset(buffer, '\0', 255);
+    int n;
+
+    //begin main execution loop
+    while (true) {
+        n = read(internalFD, buffer,255);
+        if (n > 0) {
+            printf("Received message from Datalink Layer\n");
+            printf("Message content: %s\n", buffer);
+
+            //logic to be determined
+
+            memset(buffer, '\0', 255);
+        }
+
+        /* to be written
+        n = read(externalFD,buffer,255);
+        if (n > 0) {
+            printf("Received message from external machine\n");
+            printf("Message content: %s\n", buffer);
+            printf("To be written\n");
+            memset(buffer, '\0', 255);
+        }
+        */
+    }
+
+    return true;
+}
+
 int main (int argc, char *argv[]) {
     printf("Starting Physical Layer\n");
 
@@ -53,10 +84,7 @@ int main (int argc, char *argv[]) {
         return -1;
     }
 
-    //begin main execution loop
-    while (true) {
-       ;
-    }
+    myPH->run();
 
     delete myPH;
     return 1;

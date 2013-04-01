@@ -31,18 +31,47 @@ bool DatalinkLayer::initialize(int portInternalUp, int portInternalDown) {
         return false;
     }
 
-/*  hold off on this code until the application code is at a point where it is ready to connect
     internalUpFD = listenForInternalService(portInternalUp, "Datalink Layer");
     if (internalUpFD == 0){
         printf("Error, closing down\n");
         return false;
     }
-    */
-
 
     return true;
 }
 
+bool DatalinkLayer::run() {
+    //begin main execution loop
+    char buffer[255];
+    memset(buffer, '\0', 255);
+    int n;
+    while (true) {
+        n = read(internalUpFD,buffer,255);
+        if (n > 0) {
+            printf("Received message from Network Layer\n");
+            printf("Message content: %s\n", buffer);
+
+            //process message, probably a different function
+            //divide frames to packets?
+
+            printf("Forwarding to Physical Layer\n");
+            n = write(internalDownFD, buffer, 255);
+            if (n < 0)
+                 printf("ERROR writing to socket");
+
+            memset(buffer, '\0', 255);
+        }
+
+        n = read(internalDownFD,buffer,255);
+        if (n > 0) {
+            printf("Received message from Physical Layer\n");
+            printf("Message content: %s\n", buffer);
+            printf("To be written\n");
+            memset(buffer, '\0', 255);
+        }
+    }
+    return true;
+}
 
 int main (int argc, char *argv[]) {
     printf("Starting Datalink Layer\n");
@@ -53,11 +82,8 @@ int main (int argc, char *argv[]) {
         return -1;
     }
 
-    //begin main execution loop
-    while (true) {
-       ;
-    }
-    //begin main execution loop
+    myDL->run();
+
     delete myDL;
     return 1;
 }

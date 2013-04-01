@@ -5,15 +5,18 @@
 
 #include "common.h"
 
-typedef enum { Message_Join, Message_Kick, Message_Whisper, Message_Speak, Message_List, Message_Quit, Message_QueryUpdate } Message_Type;
+typedef enum { Message_Join, Message_Kick, Message_Whisper, Message_Speak, Message_List, Message_Quit } Message_Type;
 
-class Message {
+struct Message {
 public:
-    Message(Message_Type type, char* data);
+    Message(Message_Type newType, const char* newData);
+
+    char *targetMachine;  //perhaps names like SERVER or CLIENT_A?  Or possibly an IP address
 
     Message_Type type;
-    char *data;
+    const char *data;
 };
+
 
 
 #endif

@@ -21,6 +21,7 @@ public:
     ~DatalinkLayer();
 
     bool initialize(int portInternalUp, int portInternalDown);
+    bool run();
 
 
 /*
