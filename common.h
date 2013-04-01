@@ -43,7 +43,21 @@ struct Packet {
 //    void deSerialize(char *inString);
 };
 
+/**
+ *  Blocks a process until a connect request has been accepted on the specified port.  This is used to bring up
+ *  the interal service connections.
+ *  @param port - the port of the current service.
+ *  @param serviceName - a descriptive name used to log errors and successes during the setup process
+ *  @returns the file descriptor of the socket for the connection or 0 if failed
+ */
 int listenForInternalService(int port, const char *serviceName);
+
+/**
+ *  Establishes a connection to an existing internal service listed at the indicated port.
+ *  @param port - the port number where the internal service resides
+ *  @param serviceName - a descriptive name used to log errors and successes during the setup process
+ *  @returns the file descriptor of the socket for the connection or 0 if failed
+ */
 int connectToInternalService(int port, const char *serviceName);
 
 #endif

@@ -14,7 +14,11 @@ public:
     char *targetMachine;  //perhaps names like SERVER or CLIENT_A?  Or possibly an IP address
 
     Message_Type type;
+    int dataLength; //length of the data field
     const char *data;
+
+    //serialize
+    //deSerialize
 };
 
 
