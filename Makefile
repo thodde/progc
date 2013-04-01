@@ -40,4 +40,4 @@ Message.o: Message.cpp
 	g++ -c Message.cpp
 
 clean:
-	rm -rf *o ChatClient ChatServer common DatalinkLayer PhysicalLayer
+	rm -rf *o ChatClient ChatServer common DatalinkLayer PhysicalLayer testAZ
