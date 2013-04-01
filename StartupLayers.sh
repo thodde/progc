@@ -1,3 +1,5 @@
+# Author: Trevor Hodde
+# This script starts up the two bottom layers before starting the application layer
 #!/bin/bash 
 
 declare result=$(pgrep "PhysicalLayer")
