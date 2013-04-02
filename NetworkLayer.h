@@ -44,7 +44,7 @@ private:
     int internalFD;
 
     // converts the message from the Application layer to a consumable message by the Datalink Layer
-    //void convertMessageToFrame(Message *inMessage);
+    PacketNode* convertMessageToPackets(Message *inMessage);
 
 
     //this won't work, as it takes several packets to create a frame, but it's a start...

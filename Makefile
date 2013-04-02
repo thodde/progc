@@ -1,10 +1,10 @@
 all: ChatServer ChatClient PhysicalLayer DatalinkLayer testAZ
 
-ChatServer: ChatServer.o Message.o NetworkLayer.o common.o
-	g++ -o ChatServer ChatServer.o Message.o NetworkLayer.o common.o
+ChatServer: ChatServer.o NetworkLayer.o common.o Message.o
+	g++ -o ChatServer ChatServer.o NetworkLayer.o common.o Message.o
 
-ChatClient: ChatClient.o Message.o NetworkLayer.o common.o
-	g++ -o ChatClient ChatClient.o Message.o NetworkLayer.o common.o
+ChatClient: ChatClient.o NetworkLayer.o common.o Message.o
+	g++ -o ChatClient ChatClient.o NetworkLayer.o common.o Message.o
 
 testAZ: testAZ.o Message.o NetworkLayer.o common.o
 	g++ -o testAZ testAZ.o Message.o NetworkLayer.o common.o 
@@ -15,11 +15,11 @@ testAZ.o: testAZ.cpp
 common.o: common.cpp
 	g++ -c common.cpp
 
-ChatServer.o: ChatServer.cpp common.o
-	g++ -c ChatServer.cpp common.o
+ChatServer.o: ChatServer.cpp common.o Message.o
+	g++ -c ChatServer.cpp common.o Message.o
 
-ChatClient.o: ChatClient.cpp common.o
-	g++ -c ChatClient.cpp common.o
+ChatClient.o: ChatClient.cpp common.o Message.o
+	g++ -c ChatClient.cpp common.o Message.o
 
 DatalinkLayer: DatalinkLayer.o common.o
 	g++ -o DatalinkLayer DatalinkLayer.o common.o

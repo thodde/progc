@@ -10,6 +10,42 @@ void Packet::deSerialize(char* inString) {
 };
 */
 
+Packet::Packet() {
+    //default values
+    payloadUsed = 0;
+}
+
+char* Packet::serialize() {
+    char* outMessage = new char[MAX_PACKET_SIZE];
+    memset(outMessage, '\0', MAX_PACKET_SIZE);
+    sprintf(outMessage, "%i%i%s", type, payloadUsed, payload);
+
+    return outMessage;
+}
+
+int Packet::setPayload(char* inStream, int size) {
+//TODO here's the problem.  \0 is good for strings but for general data?
+    memset(payload, '\0', MAX_PACKET_PAYLOAD);
+    if (strlen(inStream) <= 0)
+        return 0;
+
+    if (size <= 0)
+        return 0;
+
+    payloadUsed = 0;
+
+//todo update these to a more appropriate buffer copy.  at that point it will be more appropriate to use the size parameter
+    if (strlen(inStream) < MAX_PACKET_PAYLOAD) {
+        strcpy(payload, inStream);
+        payloadUsed = strlen(payload);
+    }
+    else {
+        strncpy(payload, inStream, MAX_PACKET_PAYLOAD);
+        payloadUsed = strlen(payload);
+    }
+    return payloadUsed;
+}
+
 int listenForInternalService(int port, const char *serviceName) {
     printf("Starting to listen on port %i for internal service '%s'\n", port, serviceName);
 

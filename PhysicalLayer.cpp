@@ -51,7 +51,8 @@ bool PhysicalLayer::run() {
 
     //begin main execution loop
     while (true) {
-        n = read(internalFD, buffer,255);
+//        n = read(internalFD, buffer,255);
+        n = recv(internalFD, buffer,255, 0);
         if (n > 0) {
             printf("Received message from Datalink Layer\n");
             printf("Message content: %s\n", buffer);

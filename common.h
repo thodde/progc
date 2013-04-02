@@ -12,10 +12,12 @@
 #include <netinet/in.h>
 
 
-#define     MAX_FRAME_SIZE          192
-#define     MAX_PACKET_SIZE         100
-#define     PACKET_START_CHAR       1
-#define     PACKET_END_CHAR         23
+#define     MAX_PACKET_SIZE         192
+#define     MAX_PACKET_PAYLOAD      160 //this will need to be lowered for the frame header
+#define     MAX_FRAME_SIZE          100
+
+#define     FRAME_START_CHAR        1
+#define     FRAME_END_CHAR          23
 
 #define     EXTERNAL_PORT           2001
 #define     PH_PORT                 2002
@@ -24,21 +26,35 @@
 typedef enum { Frame_Init, Frame_Data, Frame_Ack, Frame_Final } Frame_Type;
 typedef enum { Packet_Init, Packet_Data, Packet_Ack, Packet_Final } Packet_Type;
 
-struct Frame {
-    char *nextHop; // name of the machine at the next endpoint
-    int port; // target port at the next machine
+struct Packet {
+//I will need some standards here
+    Packet();
 
-    unsigned int frameId; // identifier used by sliding window protocol
-    Frame_Type type;
-    int payload[MAX_FRAME_SIZE];    // minus overhead
-    unsigned int checkByte; // byte used for error detection.  MOD 255 of the Frame object to 0
+    /**
+     *  Read as far into the stream as possible and load into playload.  Return number of chars loaded into payload.
+     *  TODO the problem here is that string functions have some delimiters that I want to ignore and copy over.  Is there a buffer copy?
+     */
+    int setPayload(char* inStream, int size);
+
+    char* serialize();
+
+    int payloadUsed;
+    Packet_Type type;
+    char payload[MAX_PACKET_PAYLOAD];    // minus overhead
 };
 
-struct Packet {
-    Packet_Type type;
+struct PacketNode {
+    Packet *data;
+    PacketNode *next;
+};
 
-    int payload[MAX_PACKET_SIZE];
+struct Frame {
+    Frame_Type type;
 
+    unsigned int frameId; // identifier used by sliding window protocol
+    int payload[MAX_FRAME_SIZE];
+    bool moreFrames;
+//    unsigned int checkByte; // byte used for error detection.  MOD 255 of the Frame object to 0
 //    char* serialize();
 //    void deSerialize(char *inString);
 };

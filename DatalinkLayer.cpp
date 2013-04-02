@@ -46,7 +46,9 @@ bool DatalinkLayer::run() {
     memset(buffer, '\0', 255);
     int n;
     while (true) {
-        n = read(internalUpFD,buffer,255);
+    //is there a peek function?  This appears to be blocking, I mean I could block until no more messages....
+//        n = read(internalUpFD,buffer,255);
+        n = recv(internalUpFD, buffer, 255, 0);
         if (n > 0) {
             printf("Received message from Network Layer\n");
             printf("Message content: %s\n", buffer);
@@ -62,7 +64,8 @@ bool DatalinkLayer::run() {
             memset(buffer, '\0', 255);
         }
 
-        n = read(internalDownFD,buffer,255);
+//        n = read(internalDownFD,buffer,255);
+        n = recv(internalDownFD,buffer,255, 0);
         if (n > 0) {
             printf("Received message from Physical Layer\n");
             printf("Message content: %s\n", buffer);
