@@ -2,20 +2,56 @@
 #include "Message.h"
 
 
-Message::Message(Message_Type newType, char* newData) {
+Message::Message(Message_Type newType, char* newData, int size) {
+    if (size < 0)
+        return;
+
     type = newType;
-    data = newData;
-    dataLength = strlen(data);
+    data = new char[size];
+    memset(data, '\0', size);
+    memcpy(data, newData, size);
+    dataLength = size;
 };
 
+Message::Message(char* stream) {
+    deSerialize(stream);
+}
 
-char* Message::serialize() {
+
+char* Message::serialize(int &serializedLength) {
     int messageSize = MESSAGE_HEADER_SIZE + dataLength;
     char* outMessage = new char[messageSize];
-
-    //this mechanism doesn't feel right
     memset(outMessage, '\0', messageSize);
-    sprintf(outMessage, "%i%i%s", type, dataLength, data);
 
+    char* cursor = outMessage;
+    memcpy(cursor, &type, sizeof(type));
+    cursor += sizeof(type);
+    memcpy(cursor, &dataLength, sizeof(dataLength));
+    cursor += sizeof(dataLength);
+    memcpy(cursor, data, sizeof(char)*dataLength);
+    cursor += sizeof(char)*dataLength;
+
+    serializedLength = (cursor - outMessage);
+/*
+    printf("Serialized message:");
+    for (int i = 0; i < (MESSAGE_HEADER_SIZE + dataLength); i++)
+        printf("%c", outMessage[i]);
+    printf("\n");
+*/
     return outMessage;
+}
+
+bool Message::deSerialize(char *stream) {
+    char *cursor = stream;
+
+    memcpy(&type, cursor, sizeof(type));
+    cursor += sizeof(type);
+    memcpy(&dataLength, cursor, sizeof(dataLength));
+    cursor += sizeof(dataLength);
+    data = new char[dataLength];
+    memset(data, '\0', dataLength);
+    memcpy(data, cursor, sizeof(char)*dataLength);
+    cursor += sizeof(char)*dataLength;
+
+    return true;
 }

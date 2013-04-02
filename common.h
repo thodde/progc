@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 
 
 #define     MAX_PACKET_SIZE         192
@@ -27,8 +28,9 @@ typedef enum { Frame_Init, Frame_Data, Frame_Ack, Frame_Final } Frame_Type;
 typedef enum { Packet_Init, Packet_Data, Packet_Ack, Packet_Final } Packet_Type;
 
 struct Packet {
-//I will need some standards here
-    Packet();
+    //the packet id will need to be removed later, this should only exist at the DLL layer.
+    Packet(unsigned int newPacketId, bool isFinalPacket);
+    Packet(char* instream);
 
     /**
      *  Read as far into the stream as possible and load into playload.  Return number of chars loaded into payload.
@@ -37,7 +39,10 @@ struct Packet {
     int setPayload(char* inStream, int size);
 
     char* serialize();
+    bool deSerialize(char *stream);
+    bool finalPacket;
 
+    unsigned int packetId;
     int payloadUsed;
     Packet_Type type;
     char payload[MAX_PACKET_PAYLOAD];    // minus overhead
@@ -74,6 +79,6 @@ int listenForInternalService(int port, const char *serviceName);
  *  @param serviceName - a descriptive name used to log errors and successes during the setup process
  *  @returns the file descriptor of the socket for the connection or 0 if failed
  */
-int connectToInternalService(int port, const char *serviceName);
+int connectToInternalService(int port, const char *serviceName, bool nonBlocking);
 
 #endif

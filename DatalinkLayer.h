@@ -4,13 +4,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <netinet/in.h>
 
 #include "common.h"
-//#include "Message.h"
-//#include "PhysicalLayer.h"
 
 
 //IP address of next hop, plus info for next level up
@@ -70,6 +70,9 @@ private:
 
     //the file descriptor for the socket leading to the network layer
     int internalUpFD;
+
+    char upBuffer[1024];
+    char downBuffer[1024];
 };
 
 #endif

@@ -10,38 +10,71 @@ void Packet::deSerialize(char* inString) {
 };
 */
 
-Packet::Packet() {
+Packet::Packet(unsigned int newPacketId, bool isFinalPacket) {
     //default values
     payloadUsed = 0;
+    packetId = newPacketId;
+    memset(payload, '\0', MAX_PACKET_PAYLOAD);
+    finalPacket = isFinalPacket;
 }
+
+Packet::Packet(char* instream) {
+    memset(payload, '\0', MAX_PACKET_PAYLOAD);
+    deSerialize(instream);
+}
+
 
 char* Packet::serialize() {
     char* outMessage = new char[MAX_PACKET_SIZE];
     memset(outMessage, '\0', MAX_PACKET_SIZE);
-    sprintf(outMessage, "%i%i%s", type, payloadUsed, payload);
+    char* msgCursor = outMessage;
+    memcpy(msgCursor, &packetId, sizeof(packetId));
+    msgCursor += sizeof(packetId);
+    memcpy(msgCursor, &type, sizeof(type));
+    msgCursor += sizeof(type);
+    memcpy(msgCursor, &finalPacket, sizeof(finalPacket));
+    msgCursor += sizeof(finalPacket);
+    memcpy(msgCursor, &payloadUsed, sizeof(payloadUsed));
+    msgCursor += sizeof(payloadUsed);
+    memcpy(msgCursor, payload, sizeof(payloadUsed)*payloadUsed);
+    msgCursor += sizeof(payload)*payloadUsed;
 
     return outMessage;
+}
+
+bool Packet::deSerialize(char *stream) {
+    char *msgCursor = stream;
+
+    memcpy(&packetId, msgCursor, sizeof(packetId));
+    msgCursor += sizeof(packetId);
+    memcpy(&type, msgCursor, sizeof(type));
+    msgCursor += sizeof(type);
+    memcpy(&finalPacket, msgCursor, sizeof(finalPacket));
+    msgCursor += sizeof(finalPacket);
+    memcpy(&payloadUsed, msgCursor, sizeof(payloadUsed));
+    msgCursor += sizeof(payloadUsed);
+    memcpy(payload, msgCursor, sizeof(payloadUsed)*payloadUsed);
+    msgCursor += payloadUsed;
+
+    return true;
 }
 
 int Packet::setPayload(char* inStream, int size) {
 //TODO here's the problem.  \0 is good for strings but for general data?
     memset(payload, '\0', MAX_PACKET_PAYLOAD);
-    if (strlen(inStream) <= 0)
-        return 0;
-
     if (size <= 0)
         return 0;
 
     payloadUsed = 0;
 
 //todo update these to a more appropriate buffer copy.  at that point it will be more appropriate to use the size parameter
-    if (strlen(inStream) < MAX_PACKET_PAYLOAD) {
-        strcpy(payload, inStream);
-        payloadUsed = strlen(payload);
+    if (size < MAX_PACKET_PAYLOAD) {
+        memcpy(payload, inStream, size);
+        payloadUsed = size;
     }
     else {
-        strncpy(payload, inStream, MAX_PACKET_PAYLOAD);
-        payloadUsed = strlen(payload);
+        memcpy(payload, inStream, MAX_PACKET_PAYLOAD);
+        payloadUsed = MAX_PACKET_PAYLOAD;
     }
     return payloadUsed;
 }
@@ -104,7 +137,8 @@ int listenForInternalService(int port, const char *serviceName) {
 
 
 
-int connectToInternalService(int port, const char *serviceName) {
+
+int connectToInternalService(int port, const char *serviceName, bool nonBlocking) {
     printf("Connecting to Service '%s' at internal port %i\n", serviceName, port);
 
     int sockfd, n;
@@ -122,6 +156,8 @@ int connectToInternalService(int port, const char *serviceName) {
         printf("%s ERROR opening socket\n", serviceName);
         return 0;
     }
+    if (nonBlocking)
+        fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
     //server = gethostbyname("localhost");
     if (server == NULL) {

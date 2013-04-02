@@ -43,12 +43,19 @@ private:
     // The internal file descriptor for the socket used to communicate with the datalink layer
     int internalFD;
 
+    unsigned int curPacketId;
+
     // converts the message from the Application layer to a consumable message by the Datalink Layer
     PacketNode* convertMessageToPackets(Message *inMessage);
 
+//needs to be at least twice as large as the Packet
+    char partialMessageBuffer[1024];
 
-    //this won't work, as it takes several packets to create a frame, but it's a start...
-    //void convertPacketToFrame(Packet *inPacket);
+    int partialBufferUsed;
+    Packet* receivedPackets[100];
+    int packetsReceived;
+
+    bool hasFinalPacket();
 
 };
 

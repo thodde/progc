@@ -25,7 +25,7 @@ bool DatalinkLayer::initialize(int portInternalUp, int portInternalDown) {
     internalDownFD = 0;
 
 
-    internalDownFD = connectToInternalService(portInternalDown, "Physical Layer");
+    internalDownFD = connectToInternalService(portInternalDown, "Physical Layer", false);
     if (internalDownFD == 0) {
         printf("Error, closing down\n");
         return false;
@@ -42,37 +42,161 @@ bool DatalinkLayer::initialize(int portInternalUp, int portInternalDown) {
 
 bool DatalinkLayer::run() {
     //begin main execution loop
-    char buffer[255];
-    memset(buffer, '\0', 255);
+    memset(upBuffer, '\0', 1024);
+    memset(downBuffer, '\0', 1024);
+    char generalBuffer[255];
     int n;
-    while (true) {
-    //is there a peek function?  This appears to be blocking, I mean I could block until no more messages....
-//        n = read(internalUpFD,buffer,255);
-        n = recv(internalUpFD, buffer, 255, 0);
-        if (n > 0) {
-            printf("Received message from Network Layer\n");
-            printf("Message content: %s\n", buffer);
+    int upBufferUsed = 0;
+    int downBufferUsed = 0;
+    Packet* receivedPackets[100];
+    int packetsReceived = 0;
 
-            //process message, probably a different function
-            //divide frames to packets?
+    struct timeval tv;
+    fd_set readfds;
 
-            printf("Forwarding to Physical Layer\n");
-            n = write(internalDownFD, buffer, 255);
-            if (n < 0)
-                 printf("ERROR writing to socket");
+    int socketsReady;
 
-            memset(buffer, '\0', 255);
+    int maxFDId;
+    if (internalDownFD > internalUpFD)
+        maxFDId = internalDownFD;
+    else
+        maxFDId = internalUpFD;
+
+    while (internalUpFD != 0 && internalDownFD != 0) {
+        tv.tv_sec = 2;
+        tv.tv_usec = 500000;
+        FD_ZERO(&readfds);
+        FD_SET(internalDownFD, &readfds);
+        FD_SET(internalUpFD, &readfds);
+
+        socketsReady = select(maxFDId+1, &readfds, NULL, NULL, &tv);
+
+        if (socketsReady > 0) {
+            if (FD_ISSET(internalUpFD, &readfds)) {
+                memset(generalBuffer, '\0', 255);
+                n = read(internalUpFD, generalBuffer, 255);
+        //        n = recv(internalUpFD, generalBuffer, MAX_PACKET_SIZE, 0);
+                if (n == 0) {
+                    //error, socket was closed
+                    printf("Connection to Network Layer lost, exiting...\n");
+                    internalUpFD = 0;
+                }
+                else {
+                    printf("Received message from Network Layer:");
+                    for (int i = 0; i < 255; i++) {
+                        printf("%c", generalBuffer[i]);
+                    }
+                    printf("\n");
+
+                    memcpy(upBuffer+upBufferUsed, generalBuffer, n);
+                    upBufferUsed += n;
+                    memset(generalBuffer, '\0', MAX_PACKET_SIZE);
+
+                    //process only complete messages
+                    while (upBufferUsed >= MAX_PACKET_SIZE) {
+                        receivedPackets[packetsReceived++] = new Packet(upBuffer);
+
+                        //shift buffer
+                        memmove(upBuffer, (upBuffer + MAX_PACKET_SIZE), (1024-MAX_PACKET_SIZE));
+                        //null out end bytes
+                        memset(upBuffer+1024-MAX_PACKET_SIZE, '\0', MAX_PACKET_SIZE);
+                        upBufferUsed -= MAX_PACKET_SIZE;
+                    }
+
+                    for (int i = 0; i < packetsReceived; i++) {
+                        char* serializedPacket = receivedPackets[i]->serialize();
+
+                        printf("Forwarding to Physical Layer\n", serializedPacket);
+
+                        n = write(internalDownFD, serializedPacket, MAX_PACKET_SIZE);
+                        if (n < 0)
+                             printf("ERROR writing to socket");
+ //TODO MEMORY LEAKS!!!
+                        //delete serializedPacket;
+                    }
+
+                    for (int i = 0; i < packetsReceived; i++) {
+                        //delete receivedPackets[i];
+                        receivedPackets[i] = NULL;
+                    }
+                    packetsReceived = 0;
+                //process message, probably a different function
+                //divide frames to packets?
+
+    /*
+                printf("Forwarding to Physical Layer\n");
+                n = write(internalDownFD, buffer, MAX_PACKET_SIZE);
+                if (n < 0)
+                     printf("ERROR writing to socket");
+
+                memset(buffer, '\0', MAX_PACKET_SIZE);
+                */
+                    }
+                }
+            }
+
+            //TODO this is only for testing purposes, needs to be rewritten
+            if (FD_ISSET(internalDownFD, &readfds)) {
+                memset(generalBuffer, '\0', 255);
+                n = read(internalDownFD, generalBuffer, 255);
+                if (n == 0) {
+                    //error, socket was closed
+                    printf("Connection to Physical Layer lost, exiting...\n");
+                    internalDownFD = 0;
+                }
+                else {
+                    printf("Received message from Physical Layer:");
+                    for (int i = 0; i < 255; i++) {
+                        printf("%c", generalBuffer[i]);
+                    }
+                    printf("\n");
+
+                    memcpy(downBuffer+downBufferUsed, generalBuffer, n);
+                    downBufferUsed += n;
+                    memset(generalBuffer, '\0', MAX_PACKET_SIZE);
+
+                    //process only complete messages
+                    while (downBufferUsed >= MAX_PACKET_SIZE) {
+                        receivedPackets[packetsReceived++] = new Packet(downBuffer);
+
+                        //shift buffer
+                        memmove(downBuffer, (downBuffer + MAX_PACKET_SIZE), (1024-MAX_PACKET_SIZE));
+                        //null out end bytes
+                        memset(downBuffer+1024-MAX_PACKET_SIZE, '\0', MAX_PACKET_SIZE);
+                        downBufferUsed -= MAX_PACKET_SIZE;
+                    }
+
+                    for (int i = 0; i < packetsReceived; i++) {
+                        char* serializedPacket = receivedPackets[i]->serialize();
+
+                        printf("Forwarding to Network Layer\n", serializedPacket);
+
+                        n = write(internalUpFD, serializedPacket, MAX_PACKET_SIZE);
+                        //also check if I couldn't send out whole packet...
+                        if (n < 0)
+                             printf("ERROR writing to socket");
+ //TODO MEMORY LEAKS!
+                        //delete serializedPacket;
+                    }
+                    for (int i = 0; i < packetsReceived; i++) {
+                        //delete receivedPackets[i];
+                        receivedPackets[i] = NULL;
+                    }
+                    packetsReceived = 0;
+                }
+                //process message, probably a different function
+                //divide frames to packets?
+
+    /*
+                printf("Forwarding to Physical Layer\n");
+                n = write(internalDownFD, buffer, MAX_PACKET_SIZE);
+                if (n < 0)
+                     printf("ERROR writing to socket");
+
+                memset(buffer, '\0', MAX_PACKET_SIZE);
+                */
+            }
         }
-
-//        n = read(internalDownFD,buffer,255);
-        n = recv(internalDownFD,buffer,255, 0);
-        if (n > 0) {
-            printf("Received message from Physical Layer\n");
-            printf("Message content: %s\n", buffer);
-            printf("To be written\n");
-            memset(buffer, '\0', 255);
-        }
-    }
     return true;
 }
 

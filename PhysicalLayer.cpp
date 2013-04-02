@@ -45,34 +45,90 @@ bool PhysicalLayer::initialize(int portExternal, int portInternal) {
 
 
 bool PhysicalLayer::run() {
-    char buffer[255];
-    memset(buffer, '\0', 255);
-    int n;
-
     //begin main execution loop
-    while (true) {
-//        n = read(internalFD, buffer,255);
-        n = recv(internalFD, buffer,255, 0);
-        if (n > 0) {
-            printf("Received message from Datalink Layer\n");
-            printf("Message content: %s\n", buffer);
+    char upBuffer[1024];
+    memset(upBuffer, '\0', 1024);
+    char generalBuffer[255];
+    int n;
+    int upBufferUsed = 0;
+    //TODO change this to frames? later
+    Packet* receivedPackets[100];
+    int packetsReceived = 0;
 
-            //logic to be determined
+    struct timeval tv;
+    fd_set readfds;
 
-            memset(buffer, '\0', 255);
+    int socketsReady;
+
+    int maxFDId;
+
+    while (internalFD != 0) {
+        tv.tv_sec = 2;
+        tv.tv_usec = 500000;
+        FD_ZERO(&readfds);
+        FD_SET(internalFD, &readfds);
+
+        //if (internalDownFD > internalUpFD)
+        //    maxFDId = internalDownFD;
+        //else
+        maxFDId = internalFD;
+
+        socketsReady = select(maxFDId+1, &readfds, NULL, NULL, &tv);
+
+        if (socketsReady > 0) {
+            if (FD_ISSET(internalFD, &readfds)) {
+                memset(generalBuffer, '\0', 255);
+                n = read(internalFD, generalBuffer, 255);
+                if (n == 0) {
+                    printf("Connection to Datalink Layer lost, exiting...\n");
+                    internalFD = 0;
+                }
+                else {
+                    printf("Received message from Datalink Layer:");
+                    for (int i = 0; i < 255; i++) {
+                        printf("%c", generalBuffer[i]);
+                    }
+                    printf("\n");
+
+                    memcpy(upBuffer+upBufferUsed, generalBuffer, n);
+                    upBufferUsed += n;
+                    memset(generalBuffer, '\0', MAX_PACKET_SIZE);
+
+                    //process only complete messages
+                    while (upBufferUsed >= MAX_PACKET_SIZE) {
+                        receivedPackets[packetsReceived++] = new Packet(upBuffer);
+
+                        //shift buffer
+                        memmove(upBuffer, (upBuffer + MAX_PACKET_SIZE), (1024-MAX_PACKET_SIZE));
+                        //null out end bytes
+                        memset(upBuffer+1024-MAX_PACKET_SIZE, '\0', MAX_PACKET_SIZE);
+                        upBufferUsed -= MAX_PACKET_SIZE;
+                    }
+
+                    //TODO this really doesn't belong here, but for testing purposes...
+                    if (packetsReceived > 0)
+                        printf("Message received, bouncing back up to Datalink Layer!\n");
+                    for (int i = 0; i < packetsReceived; i++) {
+                        char* serializedPacket = receivedPackets[i]->serialize();
+
+                        printf("Forwarding to Datalink Layer\n", serializedPacket);
+
+                        n = write(internalFD, serializedPacket, MAX_PACKET_SIZE);
+                        if (n < 0)
+                             printf("ERROR writing to socket");
+                        delete serializedPacket;
+                    }
+
+                    for (int i = 0; i < packetsReceived; i++) {
+                        delete receivedPackets[i];
+                        receivedPackets[i] = NULL;
+                    }
+                    packetsReceived = 0;
+                }
+            }
+            //TODO write the outgoing packet info
         }
-
-        /* to be written
-        n = read(externalFD,buffer,255);
-        if (n > 0) {
-            printf("Received message from external machine\n");
-            printf("Message content: %s\n", buffer);
-            printf("To be written\n");
-            memset(buffer, '\0', 255);
-        }
-        */
     }
-
     return true;
 }
 
