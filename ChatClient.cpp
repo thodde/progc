@@ -45,8 +45,9 @@ int ChatClient::run(int argc, char *argv[]) {
         //create an object for accessing the data link layer
         NetworkLayer* networkLayer = new NetworkLayer();
         if(!networkLayer->initialize(DLL_PORT)) {
-            printf("Error, could not connect to internal services layers\n");
-            //This should probable exit out here
+            perror("Error, could not connect to internal services layers\n");
+            delete networkLayer;
+            exit(1);
         }
 
         printf("To enter the chat room, use the 'join' command.\n");
@@ -120,6 +121,9 @@ int ChatClient::run(int argc, char *argv[]) {
             }
             printf("\n");
         }
+    delete networkLayer;
+    printf("Done.\n");
+    return 0;
 }
 
 void receive_message(Message* m) {
@@ -183,6 +187,10 @@ void ChatClient::show_help() {
         printf("\t\t\tquit\n\n");
 }
 
+/**
+ *  This is the main function which creates a chat client object
+ *  and runs the chat.
+ */
 int main(int argc, char* argv[]) {
 	ChatClient cc = ChatClient();
 	cc.run(argc, argv);

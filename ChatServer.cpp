@@ -23,6 +23,11 @@ int ChatServer::run(int argc, char *argv[]) {
         return 0;
 }
 
+/**
+ * The main function creates a chat server object
+ * and starts running it.
+ */
 int main(int argc, char *argv[]) {
-	
+	ChatServer cs = new ChatServer();
+	cs.run(argc, argv);
 }
