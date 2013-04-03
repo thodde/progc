@@ -92,9 +92,20 @@ bool DatalinkLayer::run() {
                     upBufferUsed += n;
                     memset(generalBuffer, '\0', MAX_PACKET_SIZE);
 
+
+                    //printf("Buffer available size(%i): ", upBufferUsed);
+                    for (int i = 0; i < upBufferUsed; i++)
+                        printf("%c", upBuffer[i]);
+                    printf("\n");
+
                     //process only complete messages
                     while (upBufferUsed >= MAX_PACKET_SIZE) {
                         receivedPackets[packetsReceived++] = new Packet(upBuffer);
+
+                        printf("Complete packet from Network Layer (%i) payload(%i): ", receivedPackets[packetsReceived-1]->packetId, receivedPackets[packetsReceived-1]->payloadUsed);
+                        for (int i = 0; i < receivedPackets[packetsReceived-1]->payloadUsed; i++)
+                            printf("%c", receivedPackets[packetsReceived-1]->payload[i]);
+                        printf("\n");
 
                         //shift buffer
                         memmove(upBuffer, (upBuffer + MAX_PACKET_SIZE), (1024-MAX_PACKET_SIZE));
@@ -145,11 +156,13 @@ bool DatalinkLayer::run() {
                     internalDownFD = 0;
                 }
                 else {
+/*
                     printf("Received message from Physical Layer:");
                     for (int i = 0; i < 255; i++) {
                         printf("%c", generalBuffer[i]);
                     }
                     printf("\n");
+*/
 
                     memcpy(downBuffer+downBufferUsed, generalBuffer, n);
                     downBufferUsed += n;

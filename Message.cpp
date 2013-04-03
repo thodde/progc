@@ -6,11 +6,28 @@ Message::Message(Message_Type newType, char* newData, int size) {
     if (size < 0)
         return;
 
+/*
+    printf("New message uninterpretted:");
+    int i;
+    for(i = 0; i < size; i++)
+        printf("%c", newData[i]);
+    printf("\n");
+    */
+
+    //no clue, but the error is between uninterpretted and convert to....memcpy?
     type = newType;
     data = new char[size];
     memset(data, '\0', size);
-    memcpy(data, newData, size);
+    memcpy(data, newData, size*sizeof(char));
     dataLength = size;
+    //printf("final iteration: %i size: %i data length: %i\n", i, size, dataLength);
+
+/*
+    printf("convert to message:");
+    for(int i = 0; i < dataLength; i++)
+        printf("%c", data[i]);
+    printf("\n");
+    */
 };
 
 Message::Message(char* stream) {
@@ -31,7 +48,14 @@ char* Message::serialize(int &serializedLength) {
     memcpy(cursor, data, sizeof(char)*dataLength);
     cursor += sizeof(char)*dataLength;
 
-    serializedLength = (cursor - outMessage);
+/*
+    printf("Unedited message prior to conversion:");
+    for(int i = 0; i < dataLength; i++)
+        printf("%c", data[i]);
+    printf("\n");
+*/
+
+    serializedLength = sizeof(type)+sizeof(dataLength)+sizeof(char)*dataLength;
 /*
     printf("Serialized message:");
     for (int i = 0; i < (MESSAGE_HEADER_SIZE + dataLength); i++)

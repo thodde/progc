@@ -34,6 +34,13 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
     if (internalFD == 0)
         return false;
 
+/*
+    printf("Message previously unedited:");
+    for(int i = 0; i < newMessage->dataLength; i++)
+        printf("%c", newMessage->data[i]);
+    printf("\n");
+*/
+
     //validate message parameters (like length > 0
     // break into packets
     PacketNode *sendList = convertMessageToPackets(newMessage);
@@ -71,11 +78,17 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
     int serializedLength;
     char *byteStream = inMessage->serialize(serializedLength);
 
+/*
+    printf("Initial Message:");
+    for (int i = 0; i < serializedLength; i++)
+        printf("%c", byteStream[i]);
+    printf("\n");
+*/
+
     PacketNode *headPtr = new PacketNode();
     headPtr->next = NULL;
 
     headPtr->data = new Packet(curPacketId++, false);
-    //TODO update the strlen function to be something more appropriate.  Say a decremented variable based on the size from the message object?
 
     int bytesAdded = headPtr->data->setPayload(byteStream, serializedLength);
     byteStream += bytesAdded;
@@ -90,6 +103,13 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
     printf("\n");
 */
 
+/*
+    printf("Remaining Message(%i): ", cursor->data->packetId);
+    for (int i = 0; i < (serializedLength); i++)
+        printf("%c", byteStream[i]);
+    printf("\n");
+*/
+
     while (serializedLength > 0) {
         cursor->next = new PacketNode();
         cursor = cursor->next;
@@ -100,12 +120,17 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
         serializedLength -= bytesAdded;
 
 /*
+        printf("Remaining 1 Message(%i): ", cursor->data->packetId);
+        for (int i = 0; i < (serializedLength); i++)
+            printf("%c", byteStream[i]);
+        printf("\n");
+*/
+/*
         printf("Packet'ed message (%i): ", cursor->data->packetId);
         for (int i = 0; i < MAX_PACKET_PAYLOAD; i++)
             printf("%c", cursor->data->payload[i]);
         printf("\n");
 */
-
     }
     cursor->data->finalPacket = true;
 

@@ -20,6 +20,7 @@ Packet::Packet(unsigned int newPacketId, bool isFinalPacket) {
 
 Packet::Packet(char* instream) {
     memset(payload, '\0', MAX_PACKET_PAYLOAD);
+    payloadUsed = 0;
     deSerialize(instream);
 }
 
@@ -36,8 +37,8 @@ char* Packet::serialize() {
     msgCursor += sizeof(finalPacket);
     memcpy(msgCursor, &payloadUsed, sizeof(payloadUsed));
     msgCursor += sizeof(payloadUsed);
-    memcpy(msgCursor, payload, sizeof(payloadUsed)*payloadUsed);
-    msgCursor += sizeof(payload)*payloadUsed;
+    memcpy(msgCursor, payload, sizeof(char)*payloadUsed);
+    msgCursor += sizeof(char)*payloadUsed;
 
     return outMessage;
 }
@@ -53,8 +54,10 @@ bool Packet::deSerialize(char *stream) {
     msgCursor += sizeof(finalPacket);
     memcpy(&payloadUsed, msgCursor, sizeof(payloadUsed));
     msgCursor += sizeof(payloadUsed);
-    memcpy(payload, msgCursor, sizeof(payloadUsed)*payloadUsed);
-    msgCursor += payloadUsed;
+    memcpy(payload, msgCursor, sizeof(char)*payloadUsed);
+    msgCursor += sizeof(char)*payloadUsed;
+
+    //printf("Deserialized Packet Id: %i Payload Used: %i, Payload: %s\n", packetId, payloadUsed, payload);
 
     return true;
 }
