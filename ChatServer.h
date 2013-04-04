@@ -16,7 +16,6 @@
 
 class ChatServer {
 	public:
-    		ChatServer();
 		int run(int argc, char *argv[]);
 
 	private:
