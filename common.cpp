@@ -138,7 +138,26 @@ bool guaranteedSocketWrite(int sockfd, char *stream, int length) {
     }
 
     return true;
+}
 
+bool checkSocketHasData(int sockfd) {
+    if (sockfd <= 0)
+        return false;
+
+    struct timeval tv;
+    fd_set readfds;
+    int socketsReady;
+    //timeout of 1/2 a second
+    tv.tv_usec = 500000;
+    FD_ZERO(&readfds);
+    FD_SET(sockfd, &readfds);
+    socketsReady = select(sockfd+1, &readfds, NULL, NULL, &tv);
+
+    if (socketsReady > 0)
+        if (FD_ISSET(sockfd, &readfds))
+            return true;
+
+    return false;
 }
 
 

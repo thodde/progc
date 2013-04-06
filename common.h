@@ -43,4 +43,6 @@ int connectToInternalService(int port, const char *serviceName, bool blocking);
 
 bool guaranteedSocketWrite(int sockfd, char *stream, int length);
 
+bool checkSocketHasData(int sockfd);
+
 #endif

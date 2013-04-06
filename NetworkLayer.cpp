@@ -152,6 +152,7 @@ Message* NetworkLayer::checkForMessages() {
         return NULL;
 
     int n;
+    /*
     struct timeval tv;
     fd_set readfds;
     int socketsReady;
@@ -159,70 +160,74 @@ Message* NetworkLayer::checkForMessages() {
     tv.tv_usec = 500000;
     FD_ZERO(&readfds);
     FD_SET(internalFD, &readfds);
+    */
 
+/*
     if (socketsReady > 0) {
         if (FD_ISSET(internalFD, &readfds)) {
-            char generalBuffer[255];
-            memset(generalBuffer, '\0', 255);
-            int n = read(internalFD, generalBuffer, 255);
+        */
 
-            if (n == 0) {
-                printf("Error, lost connection with Datalink Layer\n");
-                return NULL;
+    if (checkSocketHasData(internalFD)) {
+        char generalBuffer[255];
+        memset(generalBuffer, '\0', 255);
+        int n = read(internalFD, generalBuffer, 255);
+
+        if (n == 0) {
+            printf("Error, lost connection with Datalink Layer\n");
+            return NULL;
+        }
+        else {
+            printf("Received message from Datalink Layer\n");
+    /*
+            printf("Received message from Datalink Layer:");
+            for (int i = 0; i < n; i++) {
+                printf("%c", generalBuffer[i]);
             }
-            else {
-                printf("Received message from Datalink Layer\n");
-        /*
-                printf("Received message from Datalink Layer:");
-                for (int i = 0; i < n; i++) {
-                    printf("%c", generalBuffer[i]);
+            printf("\n");
+    */
+
+            memcpy(partialMessageBuffer+partialBufferUsed, generalBuffer, n);
+            partialBufferUsed += n;
+            memset(generalBuffer, '\0', MAX_PACKET_SIZE);
+
+            //process only complete messages
+            while (partialBufferUsed >= MAX_PACKET_SIZE) {
+                globalReceivedPackets++;
+                if (!addPacket(new Packet(partialMessageBuffer))) {
+                    printf("Error while recreating packet!\n");
+                }
+
+
+                //shift buffer
+                memmove(partialMessageBuffer, (partialMessageBuffer + MAX_PACKET_SIZE), (PARTIAL_MESSAGE_BUFFER_LENGTH-MAX_PACKET_SIZE));
+                //null out end bytes
+                memset(partialMessageBuffer+PARTIAL_MESSAGE_BUFFER_LENGTH-MAX_PACKET_SIZE, '\0', MAX_PACKET_SIZE);
+                partialBufferUsed -= MAX_PACKET_SIZE;
+
+                /*
+                printf("Packet Rebuilt.  Payload:");
+                for (int i = 0; i < MAX_PACKET_PAYLOAD; i++) {
+                    printf("%c", receivedPackets[packetsReceived - 1]->payload[i]);
                 }
                 printf("\n");
-        */
-
-                memcpy(partialMessageBuffer+partialBufferUsed, generalBuffer, n);
-                partialBufferUsed += n;
-                memset(generalBuffer, '\0', MAX_PACKET_SIZE);
-
-                //process only complete messages
-                while (partialBufferUsed >= MAX_PACKET_SIZE) {
-                    globalReceivedPackets++;
-                    if (!addPacket(new Packet(partialMessageBuffer))) {
-                        printf("Error while recreating packet!\n");
-                    }
+                */
+            }
 
 
-                    //shift buffer
-                    memmove(partialMessageBuffer, (partialMessageBuffer + MAX_PACKET_SIZE), (PARTIAL_MESSAGE_BUFFER_LENGTH-MAX_PACKET_SIZE));
-                    //null out end bytes
-                    memset(partialMessageBuffer+PARTIAL_MESSAGE_BUFFER_LENGTH-MAX_PACKET_SIZE, '\0', MAX_PACKET_SIZE);
-                    partialBufferUsed -= MAX_PACKET_SIZE;
+            //printf("Total received packets: %i\n", globalReceivedPackets);
+    /*
+            printf("packets received: %i\n", packetsReceived);
+    */
 
-                    /*
-                    printf("Packet Rebuilt.  Payload:");
-                    for (int i = 0; i < MAX_PACKET_PAYLOAD; i++) {
-                        printf("%c", receivedPackets[packetsReceived - 1]->payload[i]);
-                    }
-                    printf("\n");
-                    */
+            while (hasFinalPacket()) {
+                printf("Rebuilding Message\n");
+
+                PacketNode *packetList = extractPacketList();
+                if (packetList == NULL) {
+                    printf("Error rebuilding packet list\n");
+                    return NULL;
                 }
-
-
-                //printf("Total received packets: %i\n", globalReceivedPackets);
-        /*
-                printf("packets received: %i\n", packetsReceived);
-        */
-
-                while (hasFinalPacket()) {
-                    printf("Rebuilding Message\n");
-
-                    PacketNode *packetList = extractPacketList();
-                    if (packetList == NULL) {
-                        printf("Error rebuilding packet list\n");
-                        return NULL;
-                    }
-                    return convertPacketsToMessage(packetList);
-                }
+                return convertPacketsToMessage(packetList);
             }
         }
     }
