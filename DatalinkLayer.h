@@ -81,7 +81,7 @@ private:
 //remove this 'public' later
 public:
     // converts the packet from the Network layer to a consumable Frame by the Physical Layer
-    Frame* convertPacketsToFrames(Packet* inPacket);
+    FrameNode* convertPacketsToFrames(Packet* inPacket);
 };
 
 #endif
