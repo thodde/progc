@@ -1,4 +1,3 @@
-
 #include "NetworkLayer.h"
 
 NetworkLayer::NetworkLayer() {
@@ -31,6 +30,7 @@ bool NetworkLayer::initialize(int portInternal) {
 
 
 bool NetworkLayer::sendMessage(Message *newMessage) {
+    int serializedLength;
     if (internalFD == 0)
         return false;
 
@@ -52,7 +52,7 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
     int bytesWritten = 0;
     while (sendList != NULL) {
 
-        char *sendStream = sendList->data->serialize();
+        char *sendStream = sendList->data->serialize(serializedLength);
 
 /*
         printf("Network Layer sending:");

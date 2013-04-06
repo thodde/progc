@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 
 #include "common.h"
+#include "Frame.h"
 //#include "DatalinkLayer.h"
 
 /**
@@ -60,8 +61,6 @@ private:
     // The file descriptor of the socket used to communicate with the datalink layer.
     int internalFD;
 
-    //Packet* convertFrameToPacket(Frame *inFrame);
-    //int readPacket(char* inString, Packet *outPacket);
     //bool appropriatePort();
     //char* stuffBits(char* inStream);
 

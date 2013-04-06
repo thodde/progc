@@ -51,9 +51,9 @@ bool PhysicalLayer::run() {
     char generalBuffer[255];
     int n;
     int upBufferUsed = 0;
-    //TODO change this to frames? later
-    Packet* receivedPackets[100];
-    int packetsReceived = 0;
+    Frame* receivedFrame[100];
+    int framesReceived = 0;
+    int serializedLength;
 
     struct timeval tv;
     fd_set readfds;
@@ -68,9 +68,6 @@ bool PhysicalLayer::run() {
         FD_ZERO(&readfds);
         FD_SET(internalFD, &readfds);
 
-        //if (internalDownFD > internalUpFD)
-        //    maxFDId = internalDownFD;
-        //else
         maxFDId = internalFD;
 
         socketsReady = select(maxFDId+1, &readfds, NULL, NULL, &tv);
@@ -93,38 +90,38 @@ bool PhysicalLayer::run() {
 
                     memcpy(upBuffer+upBufferUsed, generalBuffer, n);
                     upBufferUsed += n;
-                    memset(generalBuffer, '\0', MAX_PACKET_SIZE);
+                    memset(generalBuffer, '\0', MAX_FRAME_SIZE);
 
                     //process only complete messages
-                    while (upBufferUsed >= MAX_PACKET_SIZE) {
-                        receivedPackets[packetsReceived++] = new Packet(upBuffer);
+                    while (upBufferUsed >= MAX_FRAME_SIZE) {
+                        receivedFrame[framesReceived++] = new Frame(upBuffer);
 
                         //shift buffer
-                        memmove(upBuffer, (upBuffer + MAX_PACKET_SIZE), (1024-MAX_PACKET_SIZE));
+                        memmove(upBuffer, (upBuffer + MAX_FRAME_SIZE), (1024-MAX_FRAME_SIZE));
                         //null out end bytes
-                        memset(upBuffer+1024-MAX_PACKET_SIZE, '\0', MAX_PACKET_SIZE);
-                        upBufferUsed -= MAX_PACKET_SIZE;
+                        memset(upBuffer+1024-MAX_FRAME_SIZE, '\0', MAX_FRAME_SIZE);
+                        upBufferUsed -= MAX_FRAME_SIZE;
                     }
 
                     //TODO this really doesn't belong here, but for testing purposes...
-                    if (packetsReceived > 0)
+                    if (framesReceived > 0)
                         printf("Message received, bouncing back up to Datalink Layer!\n");
-                    for (int i = 0; i < packetsReceived; i++) {
-                        char* serializedPacket = receivedPackets[i]->serialize();
+                    for (int i = 0; i < framesReceived; i++) {
+                        char* serializedFrame = receivedFrame[i]->serialize(serializedLength);
 
-                        printf("Forwarding to Datalink Layer\n", serializedPacket);
+                        printf("Forwarding to Datalink Layer\n", serializedFrame);
 
-                        n = write(internalFD, serializedPacket, MAX_PACKET_SIZE);
+                        n = write(internalFD, serializedFrame, MAX_FRAME_SIZE);
                         if (n < 0)
                              printf("ERROR writing to socket");
-                        delete serializedPacket;
+                        delete serializedFrame;
                     }
 
-                    for (int i = 0; i < packetsReceived; i++) {
-                        delete receivedPackets[i];
-                        receivedPackets[i] = NULL;
+                    for (int i = 0; i < framesReceived; i++) {
+                        delete receivedFrame[i];
+                        receivedFrame[i] = NULL;
                     }
-                    packetsReceived = 0;
+                    framesReceived = 0;
                 }
             }
             //TODO write the outgoing packet info

@@ -1,6 +1,7 @@
 *.o
+*.exe
 .DS_Store
-*
 .idea/*
 !Makefile
 !StartupLayers.sh
+

@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "Message.h"
+#include "Packet.h"
 
 #define PARTIAL_MESSAGE_BUFFER_LENGTH           1024
 
