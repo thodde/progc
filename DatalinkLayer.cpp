@@ -126,14 +126,22 @@ bool DatalinkLayer::run() {
                             printf("%c", serializedPacket[y]);
                         printf("\n");
 
+                			//process message by dividing frames to packets
+			            FrameNode* currentFrame = convertPacketsToFrames(receivedPackets[i]);
 
+                        while (currentFrame != NULL) {
+                            char* serializeFrame = currentFrame->data->serialize();
+                            printf("Frame data: \n");
+                            for(int x = 0; x < MAX_FRAME_SIZE; x++) {
+                                printf("%c", serializeFrame[x]);
+                            }
 
+                            n = write(internalDownFD, currentFrame->data->serialize(), MAX_FRAME_SIZE);
+                            if (n < 0)
+                                 printf("ERROR writing to socket");
+                            currentFrame = currentFrame->next;
+                        }
 
-			//process message by dividing frames to packets
-			            Frame* currentFrame = convertPacketsToFrames(receivedPackets[i]);
-                        n = write(internalDownFD, currentFrame, MAX_FRAME_SIZE);
-                        if (n < 0)
-                             printf("ERROR writing to socket");
  //TODO MEMORY LEAKS!!!
                         //delete serializedPacket;
                     }
@@ -215,7 +223,7 @@ bool DatalinkLayer::run() {
     return true;
 }
 
-Frame* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
+FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
     if (inPacket == NULL)
         return NULL;
 
@@ -251,7 +259,7 @@ Frame* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
     printf("Final frame data: %s\n", cursor->data->payload);
     //cursor->data->finalFrame = true;
 
-    return headPtr->data;
+    return headPtr;
 }
 
 int main (int argc, char *argv[]) {
