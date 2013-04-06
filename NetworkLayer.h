@@ -4,6 +4,8 @@
 #include "common.h"
 #include "Message.h"
 
+#define PARTIAL_MESSAGE_BUFFER_LENGTH           1024
+
 /**
  *  This class encapsulates all the functionality of the network layer.  Unlike the Physical or Datalink Layer, this
  *  layer is directly incorporated into the application layer.
@@ -49,15 +51,17 @@ private:
 
     // converts the message from the Application layer to a consumable message by the Datalink Layer
     PacketNode* convertMessageToPackets(Message *inMessage);
+    Message* convertPacketsToMessage(PacketNode *headptr);
 
 //needs to be at least twice as large as the Packet
-    char partialMessageBuffer[1024];
+    char partialMessageBuffer[PARTIAL_MESSAGE_BUFFER_LENGTH];
 
     int partialBufferUsed;
-    Packet* receivedPackets[100];
-    int packetsReceived;
+    PacketNode* receivedPackets;
 
+    bool addPacket(Packet* newPacket);
     bool hasFinalPacket();
+    PacketNode* extractPacketList();
 
 };
 

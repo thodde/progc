@@ -146,8 +146,12 @@ int connectToInternalService(int port, const char *serviceName, bool blocking) {
         printf("%s ERROR opening socket\n", serviceName);
         return 0;
     }
-    if (!blocking)
-        fcntl(sockfd, F_SETFL, O_NONBLOCK);
+    /* Blocking/non-blocking request is ignored
+    if (!blocking) {
+        int x = fcntl(sockfd, F_GETFL, 0);
+        fcntl(sockfd, F_SETFL, x | O_NONBLOCK);
+    }
+    */
 
     //server = gethostbyname("localhost");
     if (server == NULL) {
@@ -163,13 +167,12 @@ int connectToInternalService(int port, const char *serviceName, bool blocking) {
     serv_addr.sin_port = htons(port);
 
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
-        printf("%s ERROR connecting\n", serviceName);
+        printf("%s ERROR (%i) connecting with message: %s\n", serviceName, errno, strerror(errno));
         return 0;
     }
 
     bzero(buffer,256);
     sprintf(buffer, "checking in");
-//    fgets(buffer,255,stdin);
     n = write(sockfd,buffer,strlen(buffer));
     if (n < 0) {
          printf("%s ERROR writing to socket\n", serviceName);
@@ -183,6 +186,31 @@ int connectToInternalService(int port, const char *serviceName, bool blocking) {
          return 0;
     }
     return sockfd;
+}
+
+bool guaranteedSocketWrite(int sockfd, char *stream, int length) {
+    if (length <= 0)
+        return false;
+
+    int thisWrite = 0;
+    int totalWritten = 0;
+
+    while (totalWritten < length) {
+        thisWrite = write(sockfd+totalWritten, stream, length-totalWritten);
+
+        if (thisWrite < 0) //error while writing
+            return false;
+        else if (thisWrite == 0) //socket closed?  or is it just in use?  or maybe just full?
+            return false;
+
+        totalWritten += thisWrite;
+
+        if (totalWritten > length) //error wrote too much
+            return false;
+    }
+
+    return true;
+
 }
 
 

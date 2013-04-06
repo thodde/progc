@@ -34,7 +34,6 @@ Message::Message(char* stream) {
     deSerialize(stream);
 }
 
-
 char* Message::serialize(int &serializedLength) {
     int messageSize = MESSAGE_HEADER_SIZE + dataLength;
     char* outMessage = new char[messageSize];

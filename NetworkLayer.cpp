@@ -4,9 +4,9 @@
 NetworkLayer::NetworkLayer() {
     internalFD = 0;
     curPacketId = 0;
-    memset(partialMessageBuffer, '\0', 1024);
+    memset(partialMessageBuffer, '\0', PARTIAL_MESSAGE_BUFFER_LENGTH);
     partialBufferUsed = 0;
-    packetsReceived = 0;
+    //packetsReceived = 0;
     globalSentPackets = 0;
     globalReceivedPackets = 0;
 }
@@ -20,9 +20,7 @@ bool NetworkLayer::initialize(int portInternal) {
     printf("Initializing Network Layer\n");
     internalFD = 0;
 
-//TODO set to block during testing, turn this back afterwards...
-//    internalFD = connectToInternalService(portInternal, "Datalink Layer", true);
-    internalFD = connectToInternalService(portInternal, "Datalink Layer", false);
+    internalFD = connectToInternalService(portInternal, "Datalink Layer", true);
     if (internalFD == 0) {
         printf("Error, closing down\n");
         return false;
@@ -50,7 +48,7 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
     if (sendList == NULL) //errors converting message
         return false;
 
-    int n;
+//    int n;
     int bytesWritten = 0;
     while (sendList != NULL) {
 
@@ -63,12 +61,11 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
         printf("\n");
 */
 
-//TODO This should check that all bytes were written
-        n = write(internalFD, sendStream, MAX_PACKET_SIZE);
-        bytesWritten += n;
+        if (!guaranteedSocketWrite(internalFD, sendStream, MAX_PACKET_SIZE))
+            printf("ERROR writing to socket, entire message not sent or error encountered\n");
+
+        bytesWritten += MAX_PACKET_SIZE;
         globalSentPackets++;
-        if (n < 0)
-             printf("ERROR writing to socket");
 
         delete sendList->data;
         sendList = sendList->next;
@@ -102,7 +99,7 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
     byteStream += bytesAdded;
     serializedLength -= bytesAdded;
 
-    printf("Packet %i of size %i\n", curPacketId-1, bytesAdded);
+    //printf("Packet %i of size %i\n", curPacketId-1, bytesAdded);
 
     PacketNode *cursor = headPtr;
 
@@ -128,7 +125,7 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
         bytesAdded = cursor->data->setPayload(byteStream, serializedLength);
         byteStream += bytesAdded;
         serializedLength -= bytesAdded;
-        printf("Packet %i of size %i\n", curPacketId-1, bytesAdded);
+        //printf("Packet %i of size %i\n", curPacketId-1, bytesAdded);
 
 /*
         printf("Remaining 1 Message(%i): ", cursor->data->packetId);
@@ -144,7 +141,7 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
 */
     }
 
-    printf("Final packet data: %s\n", cursor->data->payload);
+    //printf("Final packet data: %s\n", cursor->data->payload);
     cursor->data->finalPacket = true;
 
     return headPtr;
@@ -154,119 +151,172 @@ Message* NetworkLayer::checkForMessages() {
     if (internalFD == 0)
         return NULL;
 
-    char generalBuffer[255];
-    memset(generalBuffer, '\0', 255);
-    int n = read(internalFD, generalBuffer, 255);
+    int n;
+    struct timeval tv;
+    fd_set readfds;
+    int socketsReady;
+    //timeout of 1/2 a second
+    tv.tv_usec = 500000;
+    FD_ZERO(&readfds);
+    FD_SET(internalFD, &readfds);
 
-    if (n == 0) {
+    if (socketsReady > 0) {
+        if (FD_ISSET(internalFD, &readfds)) {
+            char generalBuffer[255];
+            memset(generalBuffer, '\0', 255);
+            int n = read(internalFD, generalBuffer, 255);
 
-    }
-    else {
-        printf("Received message from Datalink Layer\n");
-/*
-        printf("Received message from Datalink Layer:");
-        for (int i = 0; i < n; i++) {
-            printf("%c", generalBuffer[i]);
-        }
-        printf("\n");
-*/
-
-        memcpy(partialMessageBuffer+partialBufferUsed, generalBuffer, n);
-        partialBufferUsed += n;
-        memset(generalBuffer, '\0', MAX_PACKET_SIZE);
-
-        //process only complete messages
-        while (partialBufferUsed >= MAX_PACKET_SIZE) {
-            globalReceivedPackets++;
-            receivedPackets[packetsReceived] = new Packet(partialMessageBuffer);
-            packetsReceived++;
-
-            //shift buffer
-            memmove(partialMessageBuffer, (partialMessageBuffer + MAX_PACKET_SIZE), (1024-MAX_PACKET_SIZE));
-            //null out end bytes
-            memset(partialMessageBuffer+1024-MAX_PACKET_SIZE, '\0', MAX_PACKET_SIZE);
-            partialBufferUsed -= MAX_PACKET_SIZE;
-
-            /*
-            printf("Packet Rebuilt.  Payload:");
-            for (int i = 0; i < MAX_PACKET_PAYLOAD; i++) {
-                printf("%c", receivedPackets[packetsReceived - 1]->payload[i]);
+            if (n == 0) {
+                printf("Error, lost connection with Datalink Layer\n");
+                return NULL;
             }
-            printf("\n");
-            */
-        }
+            else {
+                printf("Received message from Datalink Layer\n");
+        /*
+                printf("Received message from Datalink Layer:");
+                for (int i = 0; i < n; i++) {
+                    printf("%c", generalBuffer[i]);
+                }
+                printf("\n");
+        */
+
+                memcpy(partialMessageBuffer+partialBufferUsed, generalBuffer, n);
+                partialBufferUsed += n;
+                memset(generalBuffer, '\0', MAX_PACKET_SIZE);
+
+                //process only complete messages
+                while (partialBufferUsed >= MAX_PACKET_SIZE) {
+                    globalReceivedPackets++;
+                    if (!addPacket(new Packet(partialMessageBuffer))) {
+                        printf("Error while recreating packet!\n");
+                    }
 
 
-        printf("Total received packets: %i\n", globalReceivedPackets);
-/*
-        printf("packets received: %i\n", packetsReceived);
-*/
+                    //shift buffer
+                    memmove(partialMessageBuffer, (partialMessageBuffer + MAX_PACKET_SIZE), (PARTIAL_MESSAGE_BUFFER_LENGTH-MAX_PACKET_SIZE));
+                    //null out end bytes
+                    memset(partialMessageBuffer+PARTIAL_MESSAGE_BUFFER_LENGTH-MAX_PACKET_SIZE, '\0', MAX_PACKET_SIZE);
+                    partialBufferUsed -= MAX_PACKET_SIZE;
 
-        //TODO this really doesn't belong here, but for testing purposes...
-        while (hasFinalPacket()) {
-            printf("Rebuilding Message\n");
+                    /*
+                    printf("Packet Rebuilt.  Payload:");
+                    for (int i = 0; i < MAX_PACKET_PAYLOAD; i++) {
+                        printf("%c", receivedPackets[packetsReceived - 1]->payload[i]);
+                    }
+                    printf("\n");
+                    */
+                }
 
-            //TODO arbitrary message length.  Should be managed, as this is used in multiple places
-            char msg_string[2048];
-            memset(msg_string, '\0', 2048);
-            int charsRead = 0;
 
-            int i = 0;
-            for (i = 0; i < packetsReceived; i++) {
-                memcpy(msg_string+charsRead, receivedPackets[i]->payload, MAX_PACKET_PAYLOAD);
-                charsRead += MAX_PACKET_PAYLOAD;
+                //printf("Total received packets: %i\n", globalReceivedPackets);
+        /*
+                printf("packets received: %i\n", packetsReceived);
+        */
 
-                bool finalPacket = receivedPackets[i]->finalPacket;
-//TODO MEMORY LEAK!!!
-//                delete receivedPackets[i];
-                receivedPackets[i] = NULL;
+                while (hasFinalPacket()) {
+                    printf("Rebuilding Message\n");
 
-                if (finalPacket) {
-                    break;
+                    PacketNode *packetList = extractPacketList();
+                    if (packetList == NULL) {
+                        printf("Error rebuilding packet list\n");
+                        return NULL;
+                    }
+                    return convertPacketsToMessage(packetList);
                 }
             }
-            i++;
-
-
-            //todo arbitrary, this has to be tied to the number of packets available
-            //shuffle down the packets not used
-            for (int x = 0; x < 100; x++) {
-                if ((x+i) < 100)
-                    receivedPackets[x] = receivedPackets[x+i];
-                else
-                    receivedPackets[x] = NULL;
-            }
-
-            packetsReceived -= i;
-
-            Message *myMessage = new Message(msg_string);
-            return myMessage;
         }
     }
-
-
-
 
     return NULL;
 }
 
-bool NetworkLayer::hasFinalPacket() {
-    for (int i = 0; i < packetsReceived; i++) {
-        if (receivedPackets[i] != NULL)
-            if (receivedPackets[i]->finalPacket)
-                return true;
+bool NetworkLayer::addPacket(Packet* newPacket) {
+    if (receivedPackets == NULL) {
+        receivedPackets = new PacketNode();
+        receivedPackets->next = NULL;
+        receivedPackets->data = newPacket;
+        return true;
     }
+
+    PacketNode *cursor = receivedPackets;
+    while (cursor->next != NULL)
+        cursor = cursor->next;
+
+    cursor->next = new PacketNode();
+    cursor = cursor->next;
+    cursor->next = NULL;
+    cursor->data = newPacket;
+
+    return true;
+}
+
+bool NetworkLayer::hasFinalPacket() {
+    PacketNode *cursor = receivedPackets;
+    while (cursor != NULL) {
+        if (cursor->data->finalPacket)
+            return true;
+
+        cursor = cursor->next;
+    }
+
     return false;
 }
 
-    /*
-bool NetworkLayer::receivePacket(Packet *newPacket) {
-    return true;
-} */
 
+Message* NetworkLayer::convertPacketsToMessage(PacketNode *headptr) {
+    PacketNode *cursor = headptr;
+    int bytesNeeded = 0;
 
-/*
-void NetworkLayer::convertPacketToFrame(Packet *inPacket) {
-    return;
+    //iterate through and figure out Payload * Packet size for the array of chars needed
+    while (cursor != NULL) {
+        bytesNeeded += cursor->data->payloadUsed;
+        cursor = cursor->next;
+    }
+
+    if (bytesNeeded <= 0)
+        return NULL;
+
+    char messagePayload[bytesNeeded];
+    memset(messagePayload, '\0', bytesNeeded);
+    char *payloadCursor = messagePayload;
+
+    cursor = headptr;
+    while (cursor != NULL) {
+        // strip out payload
+        memcpy(payloadCursor, cursor->data->payload, cursor->data->payloadUsed);
+        payloadCursor += cursor->data->payloadUsed;
+        cursor = cursor->next;
+    }
+
+    while (headptr != NULL) {
+        cursor = headptr;
+        headptr = headptr->next;
+        delete cursor->data;
+        delete cursor;
+    }
+
+    return new Message(messagePayload);
 }
-*/
+
+
+PacketNode* NetworkLayer::extractPacketList() {
+    if (receivedPackets == NULL)
+        return NULL;
+
+    PacketNode *packetList = receivedPackets;
+    PacketNode *cursor = receivedPackets;
+
+    while (cursor != NULL) {
+        if (cursor->data->finalPacket) {
+            //break the list here
+            receivedPackets = cursor->next;
+            cursor->next = NULL;
+            return packetList;
+        }
+        cursor = cursor->next;
+    }
+
+    //no final packet found
+    return NULL;
+}
+

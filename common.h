@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include <errno.h>
 
 
 #define     MAX_PACKET_SIZE         192
@@ -80,5 +81,7 @@ int listenForInternalService(int port, const char *serviceName);
  *  @returns the file descriptor of the socket for the connection or 0 if failed
  */
 int connectToInternalService(int port, const char *serviceName, bool blocking);
+
+bool guaranteedSocketWrite(int sockfd, char *stream, int length);
 
 #endif
