@@ -15,11 +15,12 @@ testAZ.o: testAZ.cpp
 common.o: common.cpp
 	g++ -c common.cpp
 
-ChatServer.o: ChatServer.cpp common.o Message.o
-	g++ -c ChatServer.cpp common.o Message.o
+#ChatServer.o: ChatServer.cpp common.o Message.o
+ChatServer.o: ChatServer.cpp
+	g++ -c ChatServer.cpp
 
-ChatClient.o: ChatClient.cpp common.o Message.o
-	g++ -c ChatClient.cpp common.o Message.o
+ChatClient.o: ChatClient.cpp
+	g++ -c ChatClient.cpp
 
 DatalinkLayer: DatalinkLayer.o common.o
 	g++ -o DatalinkLayer DatalinkLayer.o common.o

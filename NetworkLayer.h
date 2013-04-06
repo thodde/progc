@@ -44,6 +44,8 @@ private:
     int internalFD;
 
     unsigned int curPacketId;
+    unsigned int globalSentPackets;
+    unsigned int globalReceivedPackets;
 
     // converts the message from the Application layer to a consumable message by the Datalink Layer
     PacketNode* convertMessageToPackets(Message *inMessage);

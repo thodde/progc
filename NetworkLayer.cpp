@@ -7,6 +7,8 @@ NetworkLayer::NetworkLayer() {
     memset(partialMessageBuffer, '\0', 1024);
     partialBufferUsed = 0;
     packetsReceived = 0;
+    globalSentPackets = 0;
+    globalReceivedPackets = 0;
 }
 
 NetworkLayer::~NetworkLayer() {
@@ -18,7 +20,7 @@ bool NetworkLayer::initialize(int portInternal) {
     printf("Initializing Network Layer\n");
     internalFD = 0;
 
-//TODO set to block during testing, turn this back aftewards...
+//TODO set to block during testing, turn this back afterwards...
 //    internalFD = connectToInternalService(portInternal, "Datalink Layer", true);
     internalFD = connectToInternalService(portInternal, "Datalink Layer", false);
     if (internalFD == 0) {
@@ -49,6 +51,7 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
         return false;
 
     int n;
+    int bytesWritten = 0;
     while (sendList != NULL) {
 
         char *sendStream = sendList->data->serialize();
@@ -60,13 +63,17 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
         printf("\n");
 */
 
+//TODO This should check that all bytes were written
         n = write(internalFD, sendStream, MAX_PACKET_SIZE);
+        bytesWritten += n;
+        globalSentPackets++;
         if (n < 0)
              printf("ERROR writing to socket");
 
         delete sendList->data;
         sendList = sendList->next;
     }
+    printf("Bytes written this pass: %i, Total Packets Sent: %i\n", bytesWritten, globalSentPackets);
 
     return true;
 }
@@ -78,6 +85,7 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
     int serializedLength;
     char *byteStream = inMessage->serialize(serializedLength);
 
+    printf("Message of size: %i\n", serializedLength);
 /*
     printf("Initial Message:");
     for (int i = 0; i < serializedLength; i++)
@@ -93,6 +101,8 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
     int bytesAdded = headPtr->data->setPayload(byteStream, serializedLength);
     byteStream += bytesAdded;
     serializedLength -= bytesAdded;
+
+    printf("Packet %i of size %i\n", curPacketId-1, bytesAdded);
 
     PacketNode *cursor = headPtr;
 
@@ -118,6 +128,7 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
         bytesAdded = cursor->data->setPayload(byteStream, serializedLength);
         byteStream += bytesAdded;
         serializedLength -= bytesAdded;
+        printf("Packet %i of size %i\n", curPacketId-1, bytesAdded);
 
 /*
         printf("Remaining 1 Message(%i): ", cursor->data->packetId);
@@ -132,6 +143,8 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
         printf("\n");
 */
     }
+
+    printf("Final packet data: %s\n", cursor->data->payload);
     cursor->data->finalPacket = true;
 
     return headPtr;
@@ -164,6 +177,7 @@ Message* NetworkLayer::checkForMessages() {
 
         //process only complete messages
         while (partialBufferUsed >= MAX_PACKET_SIZE) {
+            globalReceivedPackets++;
             receivedPackets[packetsReceived] = new Packet(partialMessageBuffer);
             packetsReceived++;
 
@@ -182,6 +196,8 @@ Message* NetworkLayer::checkForMessages() {
             */
         }
 
+
+        printf("Total received packets: %i\n", globalReceivedPackets);
 /*
         printf("packets received: %i\n", packetsReceived);
 */

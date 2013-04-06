@@ -84,6 +84,7 @@ bool PhysicalLayer::run() {
                     internalFD = 0;
                 }
                 else {
+                    printf("==========================================\n");
                     printf("Received message from Datalink Layer:");
                     for (int i = 0; i < 255; i++) {
                         printf("%c", generalBuffer[i]);
