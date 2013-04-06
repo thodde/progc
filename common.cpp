@@ -1,14 +1,4 @@
 #include "common.h"
-/*
-char* Packet::serialize() {
-    char *outStr = new char[MAX_FRAME_SIZE];
-    return outStr;
-};
-
-void Packet::deSerialize(char* inString) {
-
-};
-*/
 
 Packet::Packet(unsigned int newPacketId, bool isFinalPacket) {
     //default values
@@ -23,7 +13,6 @@ Packet::Packet(char* instream) {
     payloadUsed = 0;
     deSerialize(instream);
 }
-
 
 char* Packet::serialize() {
     char* outMessage = new char[MAX_PACKET_SIZE];
@@ -63,14 +52,12 @@ bool Packet::deSerialize(char *stream) {
 }
 
 int Packet::setPayload(char* inStream, int size) {
-//TODO here's the problem.  \0 is good for strings but for general data?
     memset(payload, '\0', MAX_PACKET_PAYLOAD);
     if (size <= 0)
         return 0;
 
     payloadUsed = 0;
 
-//todo update these to a more appropriate buffer copy.  at that point it will be more appropriate to use the size parameter
     if (size < MAX_PACKET_PAYLOAD) {
         memcpy(payload, inStream, size);
         payloadUsed = size;
@@ -141,7 +128,7 @@ int listenForInternalService(int port, const char *serviceName) {
 
 
 
-int connectToInternalService(int port, const char *serviceName, bool nonBlocking) {
+int connectToInternalService(int port, const char *serviceName, bool blocking) {
     printf("Connecting to Service '%s' at internal port %i\n", serviceName, port);
 
     int sockfd, n;
@@ -159,7 +146,7 @@ int connectToInternalService(int port, const char *serviceName, bool nonBlocking
         printf("%s ERROR opening socket\n", serviceName);
         return 0;
     }
-    if (nonBlocking)
+    if (!blocking)
         fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
     //server = gethostbyname("localhost");

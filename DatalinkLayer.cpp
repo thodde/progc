@@ -25,7 +25,7 @@ bool DatalinkLayer::initialize(int portInternalUp, int portInternalDown) {
     internalDownFD = 0;
 
 
-    internalDownFD = connectToInternalService(portInternalDown, "Physical Layer", false);
+    internalDownFD = connectToInternalService(portInternalDown, "Physical Layer", true);
     if (internalDownFD == 0) {
         printf("Error, closing down\n");
         return false;

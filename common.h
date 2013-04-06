@@ -79,6 +79,6 @@ int listenForInternalService(int port, const char *serviceName);
  *  @param serviceName - a descriptive name used to log errors and successes during the setup process
  *  @returns the file descriptor of the socket for the connection or 0 if failed
  */
-int connectToInternalService(int port, const char *serviceName, bool nonBlocking);
+int connectToInternalService(int port, const char *serviceName, bool blocking);
 
 #endif
