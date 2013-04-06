@@ -50,6 +50,7 @@ bool DatalinkLayer::run() {
     int downBufferUsed = 0;
     Packet* receivedPackets[100];
     int packetsReceived = 0;
+    int serializedLength;
 
     struct timeval tv;
     fd_set readfds;
@@ -115,11 +116,13 @@ bool DatalinkLayer::run() {
                     }
 
                     for (int i = 0; i < packetsReceived; i++) {
-                        char* serializedPacket = receivedPackets[i]->serialize();
+                        char* serializedPacket = receivedPackets[i]->serialize(serializedLength);
 
                         printf("Forwarding to Physical Layer\n", serializedPacket);
 
-                        n = write(internalDownFD, serializedPacket, MAX_PACKET_SIZE);
+			//process message by dividing frames to packets
+			Frame* currentFrame = convertPacketsToFrames(receivedPackets[i]);
+                        n = write(internalDownFD, currentFrame, MAX_FRAME_SIZE);
                         if (n < 0)
                              printf("ERROR writing to socket");
  //TODO MEMORY LEAKS!!!
@@ -131,8 +134,6 @@ bool DatalinkLayer::run() {
                         receivedPackets[i] = NULL;
                     }
                     packetsReceived = 0;
-                //process message, probably a different function
-                //divide frames to packets?
 
     /*
                 printf("Forwarding to Physical Layer\n");
@@ -156,14 +157,6 @@ bool DatalinkLayer::run() {
                     internalDownFD = 0;
                 }
                 else {
-/*
-                    printf("Received message from Physical Layer:");
-                    for (int i = 0; i < 255; i++) {
-                        printf("%c", generalBuffer[i]);
-                    }
-                    printf("\n");
-*/
-
                     memcpy(downBuffer+downBufferUsed, generalBuffer, n);
                     downBufferUsed += n;
                     memset(generalBuffer, '\0', MAX_PACKET_SIZE);
@@ -180,7 +173,7 @@ bool DatalinkLayer::run() {
                     }
 
                     for (int i = 0; i < packetsReceived; i++) {
-                        char* serializedPacket = receivedPackets[i]->serialize();
+                        char* serializedPacket = receivedPackets[i]->serialize(serializedLength);
 
                         printf("Forwarding to Network Layer\n", serializedPacket);
 
@@ -213,6 +206,45 @@ bool DatalinkLayer::run() {
     return true;
 }
 
+Frame* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
+    if (inPacket == NULL)
+        return NULL;
+
+    int serializedLength;
+    char *byteStream = inPacket->serialize(serializedLength);
+
+    printf("Packet of size: %i\n", serializedLength);
+
+    FrameNode *headPtr = new FrameNode();
+    headPtr->next = NULL;
+
+    headPtr->data = new Frame(curFrameId++, false);
+
+    int bytesAdded = headPtr->data->setPayload(byteStream, serializedLength);
+    byteStream += bytesAdded;
+    serializedLength -= bytesAdded;
+
+    printf("Frame %i of size %i\n", curFrameId-1, bytesAdded);
+
+    FrameNode* cursor = headPtr;
+
+    while (serializedLength > 0) {
+        cursor->next = new FrameNode();
+        cursor = cursor->next;
+        cursor->next = NULL;
+        cursor->data = new Frame(curFrameId++, false);
+        bytesAdded = cursor->data->setPayload(byteStream, serializedLength);
+        byteStream += bytesAdded;
+        serializedLength -= bytesAdded;
+        printf("Frame %i of size %i\n", curFrameId-1, bytesAdded);
+    }
+
+    printf("Final frame data: %s\n", cursor->data->payload);
+    //cursor->data->finalFrame = true;
+
+    return headPtr->data;
+}
+
 int main (int argc, char *argv[]) {
     printf("Starting Datalink Layer\n");
 
@@ -227,7 +259,6 @@ int main (int argc, char *argv[]) {
     delete myDL;
     return 1;
 }
-
 
   /*
 bool DatalinkLayer::dl_send(Packet *outPacket) {

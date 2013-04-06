@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "Message.h"
+#include "Packet.h"
 
 /**
  *  This class encapsulates all the functionality of the network layer.  Unlike the Physical or Datalink Layer, this

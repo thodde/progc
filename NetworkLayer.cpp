@@ -1,4 +1,3 @@
-
 #include "NetworkLayer.h"
 
 NetworkLayer::NetworkLayer() {
@@ -21,8 +20,8 @@ bool NetworkLayer::initialize(int portInternal) {
     internalFD = 0;
 
 //TODO set to block during testing, turn this back afterwards...
-//    internalFD = connectToInternalService(portInternal, "Datalink Layer", true);
-    internalFD = connectToInternalService(portInternal, "Datalink Layer", false);
+    internalFD = connectToInternalService(portInternal, "Datalink Layer", true);
+    //internalFD = connectToInternalService(portInternal, "Datalink Layer", false);
     if (internalFD == 0) {
         printf("Error, closing down\n");
         return false;
@@ -33,6 +32,7 @@ bool NetworkLayer::initialize(int portInternal) {
 
 
 bool NetworkLayer::sendMessage(Message *newMessage) {
+    int serializedLength;
     if (internalFD == 0)
         return false;
 
@@ -54,7 +54,7 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
     int bytesWritten = 0;
     while (sendList != NULL) {
 
-        char *sendStream = sendList->data->serialize();
+        char *sendStream = sendList->data->serialize(serializedLength);
 
 /*
         printf("Network Layer sending:");

@@ -11,6 +11,8 @@
 #include <netinet/in.h>
 
 #include "common.h"
+#include "Frame.h"
+#include "Packet.h"
 
 
 //IP address of next hop, plus info for next level up
@@ -73,6 +75,13 @@ private:
 
     char upBuffer[1024];
     char downBuffer[1024];
+    
+    unsigned int curFrameId;
+
+//remove this 'public' later
+public:
+    // converts the packet from the Network layer to a consumable Frame by the Physical Layer
+    Frame* convertPacketsToFrames(Packet* inPacket);
 };
 
 #endif
