@@ -107,7 +107,7 @@ bool PhysicalLayer::run() {
                     if (framesReceived > 0)
                         printf("Message received, bouncing back up to Datalink Layer!\n");
                     for (int i = 0; i < framesReceived; i++) {
-                        char* serializedFrame = receivedFrame[i]->serialize(serializedLength);
+                        char* serializedFrame = receivedFrame[i]->serialize();
 
                         printf("Forwarding to Datalink Layer\n", serializedFrame);
 

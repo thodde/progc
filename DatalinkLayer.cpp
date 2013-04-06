@@ -83,11 +83,13 @@ bool DatalinkLayer::run() {
                     internalUpFD = 0;
                 }
                 else {
+                /*
                     printf("Received message from Network Layer:");
                     for (int i = 0; i < 255; i++) {
                         printf("%c", generalBuffer[i]);
                     }
                     printf("\n");
+                    */
 
                     memcpy(upBuffer+upBufferUsed, generalBuffer, n);
                     upBufferUsed += n;
@@ -116,12 +118,19 @@ bool DatalinkLayer::run() {
                     }
 
                     for (int i = 0; i < packetsReceived; i++) {
-                        char* serializedPacket = receivedPackets[i]->serialize(serializedLength);
+                        char* serializedPacket = receivedPackets[i]->serialize();
 
-                        printf("Forwarding to Physical Layer\n", serializedPacket);
+                        printf("Forwarding to Physical Layer\n");
+
+                        for (int y = 0; y < MAX_PACKET_SIZE; y++)
+                            printf("%c", serializedPacket[y]);
+                        printf("\n");
+
+
+
 
 			//process message by dividing frames to packets
-			Frame* currentFrame = convertPacketsToFrames(receivedPackets[i]);
+			            Frame* currentFrame = convertPacketsToFrames(receivedPackets[i]);
                         n = write(internalDownFD, currentFrame, MAX_FRAME_SIZE);
                         if (n < 0)
                              printf("ERROR writing to socket");
@@ -173,9 +182,9 @@ bool DatalinkLayer::run() {
                     }
 
                     for (int i = 0; i < packetsReceived; i++) {
-                        char* serializedPacket = receivedPackets[i]->serialize(serializedLength);
+                        char* serializedPacket = receivedPackets[i]->serialize();
 
-                        printf("Forwarding to Network Layer\n", serializedPacket);
+                        printf("Forwarding to Network Layer: %s\n", serializedPacket);
 
                         n = write(internalUpFD, serializedPacket, MAX_PACKET_SIZE);
                         //also check if I couldn't send out whole packet...
@@ -211,9 +220,9 @@ Frame* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
         return NULL;
 
     int serializedLength;
-    char *byteStream = inPacket->serialize(serializedLength);
+    char *byteStream = inPacket->serialize();
 
-    printf("Packet of size: %i\n", serializedLength);
+    printf("Packet of size: %i\n", inPacket->payloadUsed);
 
     FrameNode *headPtr = new FrameNode();
     headPtr->next = NULL;

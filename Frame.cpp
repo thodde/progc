@@ -15,7 +15,7 @@ Frame::Frame(char* instream) {
     deSerialize(instream);
 }
 
-char* Frame::serialize(int serializedLength) {
+char* Frame::serialize() {
     char* outPacket = new char[MAX_FRAME_SIZE];
     memset(outPacket, '\0', MAX_FRAME_SIZE);
     char* packetCursor = outPacket;

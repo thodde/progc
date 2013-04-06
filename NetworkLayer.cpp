@@ -52,7 +52,7 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
     int bytesWritten = 0;
     while (sendList != NULL) {
 
-        char *sendStream = sendList->data->serialize(serializedLength);
+        char *sendStream = sendList->data->serialize();
 
 /*
         printf("Network Layer sending:");

@@ -16,7 +16,7 @@ struct Packet {
      */
     int setPayload(char* inStream, int size);
 
-    char* serialize(int serializedLength);
+    char* serialize();
     bool deSerialize(char *stream);
     bool finalPacket;
 

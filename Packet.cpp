@@ -14,7 +14,7 @@ Packet::Packet(char* instream) {
     deSerialize(instream);
 }
 
-char* Packet::serialize(int serializedLength) {
+char* Packet::serialize() {
     char* outMessage = new char[MAX_PACKET_SIZE];
     memset(outMessage, '\0', MAX_PACKET_SIZE);
     char* msgCursor = outMessage;
