@@ -73,15 +73,29 @@ private:
     //the file descriptor for the socket leading to the network layer
     int internalUpFD;
 
-    char upBuffer[1024];
-    char downBuffer[1024];
+    char *upBuffer;
+    char *downBuffer;
     
     unsigned int curFrameId;
 
 //remove this 'public' later
 public:
+    FrameNode *framesReceived;
+
     // converts the packet from the Network layer to a consumable Frame by the Physical Layer
     FrameNode* convertPacketsToFrames(Packet* inPacket);
+
+    bool addFrameReceived(Frame *inFrame);
+    bool hasFinalFrame();
+    FrameNode* extractFrameList();
+    Packet* convertFramesToPacket(FrameNode *headptr);
+    bool receiveDataFromPhysicalLayer();
+
+    int upBufferUsed;
+    int downBufferUsed;
+    Packet* receivedPackets[100];
+    int packetsReceived;
+
 };
 
 #endif

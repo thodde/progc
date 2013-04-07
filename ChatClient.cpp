@@ -1,6 +1,7 @@
 #include "ChatClient.h"
 
 int ChatClient::run(int argc, char *argv[]) {
+        messagesSent = 0;
         char* my_string;
         char* p;
         bool safe_to_connect = false;
@@ -69,7 +70,7 @@ int ChatClient::run(int argc, char *argv[]) {
                     printf("Connecting to server...\n");
                     safe_to_connect = true;
 
-                    Message *m = new Message(Message_Join, sendline, strlen(sendline));
+                    Message *m = new Message(Message_Join, sendline, strlen(sendline), messagesSent++);
                     networkLayer->sendMessage(m);
                 }
                 else {
@@ -81,27 +82,27 @@ int ChatClient::run(int argc, char *argv[]) {
             if(safe_to_connect) {
                 if(strncasecmp(sendline, "speak ", 6) == 0) {
                     printf("speak\n");
-                    Message *m = new Message(Message_Speak, sendline, strlen(sendline));
+                    Message *m = new Message(Message_Speak, sendline, strlen(sendline), messagesSent++);
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "whisper ", 8) == 0) {
                     printf("whisper\n");
-                    Message *m = new Message(Message_Whisper, sendline, strlen(sendline));
+                    Message *m = new Message(Message_Whisper, sendline, strlen(sendline), messagesSent++);
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "kick ", 5) == 0) {
                     printf("kick\n");
-                    Message *m = new Message(Message_Kick, sendline, strlen(sendline));
+                    Message *m = new Message(Message_Kick, sendline, strlen(sendline), messagesSent++);
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "list", 4) == 0) {
                     printf("list\n");
-                    Message *m = new Message(Message_List, sendline, strlen(sendline));
+                    Message *m = new Message(Message_List, sendline, strlen(sendline), messagesSent++);
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "quit", 4) == 0) {
                     printf("Remove this message later...Exiting...\n");
-                    Message *m = new Message(Message_Quit, sendline, strlen(sendline));
+                    Message *m = new Message(Message_Quit, sendline, strlen(sendline), messagesSent++);
                     networkLayer->sendMessage(m);
                     exit(0);       
                 }

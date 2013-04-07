@@ -2,10 +2,11 @@
 #include "Message.h"
 
 
-Message::Message(Message_Type newType, char* newData, int size) {
+Message::Message(Message_Type newType, char* newData, int size, unsigned int newId) {
     if (size < 0)
         return;
 
+    messageId = newId;
 /*
     printf("New message uninterpretted:");
     int i;
@@ -14,7 +15,6 @@ Message::Message(Message_Type newType, char* newData, int size) {
     printf("\n");
     */
 
-    //no clue, but the error is between uninterpretted and convert to....memcpy?
     type = newType;
     data = new char[size];
     memset(data, '\0', size);
@@ -38,10 +38,12 @@ char* Message::serialize(int &serializedLength) {
     int messageSize = MESSAGE_HEADER_SIZE + dataLength;
     char* outMessage = new char[messageSize];
     memset(outMessage, '\0', messageSize);
-
     char* cursor = outMessage;
+
     memcpy(cursor, &type, sizeof(type));
     cursor += sizeof(type);
+    memcpy(cursor, &messageId, sizeof(messageId));
+    cursor += sizeof(messageId);
     memcpy(cursor, &dataLength, sizeof(dataLength));
     cursor += sizeof(dataLength);
     memcpy(cursor, data, sizeof(char)*dataLength);
@@ -54,7 +56,7 @@ char* Message::serialize(int &serializedLength) {
     printf("\n");
 */
 
-    serializedLength = sizeof(type)+sizeof(dataLength)+sizeof(char)*dataLength;
+    serializedLength = (int)(cursor - outMessage);  //sizeof(type)+sizeof(messageId)+sizeof(dataLength)+sizeof(char)*dataLength;
 /*
     printf("Serialized message:");
     for (int i = 0; i < (MESSAGE_HEADER_SIZE + dataLength); i++)
@@ -69,6 +71,8 @@ bool Message::deSerialize(char *stream) {
 
     memcpy(&type, cursor, sizeof(type));
     cursor += sizeof(type);
+    memcpy(&messageId, cursor, sizeof(messageId));
+    cursor += sizeof(messageId);
     memcpy(&dataLength, cursor, sizeof(dataLength));
     cursor += sizeof(dataLength);
     data = new char[dataLength];

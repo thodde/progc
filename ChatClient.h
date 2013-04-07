@@ -27,5 +27,8 @@ class ChatClient {
     public:
         int run(int argc, char* argv[]);
         void show_help();
+
+    private:
+        unsigned int messagesSent;
 };
 #endif

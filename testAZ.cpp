@@ -11,7 +11,6 @@ int main (int argc, char *argv[]) {
 
     NetworkLayer *myNL = new NetworkLayer();
     if (!myNL->initialize(DLL_PORT)) {
-        printf("doh, did not create object\n");
         delete myNL;
         return -1;
     }
@@ -44,6 +43,7 @@ One more note of interest about select(): if you have a socket that is listen()i
     inet_pton(AF_INET, "192.0.2.1", &(sa.sin_addr)); // IPv4
     */
 
+
     char *testChar = new char[2048];
     memset(testChar, '\0', 2048);
     strcat(testChar, "What's this? There are two types of Internet sockets? Yes. Well, no. I'm lying. There are more, but I didn't want to scare you.");
@@ -55,22 +55,47 @@ One more note of interest about select(): if you have a socket that is listen()i
     strcat(testChar, "the order \"1, 2\" at the opposite end. They will also be error-free. I'm so certain, in fact, they will be error-free, that I'm just going to put my fingers in my ears and chant ");
     strcat(testChar, "la la la la if anyone tries to claim otherwise. What uses stream sockets? Well, you may have heard of the telnet application, yes? It uses stream sockets. ");
 
-    printf("Sending: \n%s\n", testChar);
+    printf("Sending body of size (%i): \n%s\n", (int)strlen(testChar), testChar);
 
-    Message *testMsg = new Message(Message_Join, testChar, strlen(testChar));
+    unsigned int messagesSent = 0;
+
+    Message *testMsg = new Message(Message_Join, testChar, strlen(testChar), messagesSent++);
     myNL->sendMessage(testMsg);
 
     Message *response = NULL;
 
     printf("Waiting for response\n");
+    bool hasError = false;
 
-    while (response == NULL) {
-        response = myNL->checkForMessages();
+    bool done = false;
+    bool waitingForResponse = true;
+    char input;
+
+    while (!done && !hasError) {
+        if (waitingForResponse) {
+            response = myNL->checkForMessages(hasError);
+
+            if (response != NULL) {
+                waitingForResponse = false;
+                printf("successfully received message: \n%s\n", response->data);
+            }
+        }
+        else {
+            if (input != '\n')
+                printf("Input (q - quit, r - resend message):\n");
+
+            scanf("%c", &input);
+            printf("\n");
+            if (input == 'r') {
+                testMsg = new Message(Message_Join, testChar, strlen(testChar), messagesSent++);
+                myNL->sendMessage(testMsg);
+                waitingForResponse = true;
+                printf("\nResending\n");
+            }
+            else if (input == 'q')
+                done = true;
+        }
     }
-
-    if (response != NULL)
-        printf("successfully received message: \n%s\n", response->data);
-
 
     //begin main execution loop
     delete myNL;

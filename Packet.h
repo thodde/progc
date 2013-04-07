@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+#define     MAX_PACKET_SIZE         192
+#define     MAX_PACKET_PAYLOAD      160 //this will need to be lowered due to the packet header
+
 typedef enum { Packet_Init, Packet_Data, Packet_Ack, Packet_Final } Packet_Type;
 
 struct Packet {

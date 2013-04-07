@@ -56,7 +56,7 @@ int listenForInternalService(int port, const char *serviceName) {
     return newsockfd;
 }
 
-int connectToInternalService(int port, const char *serviceName, bool blocking) {
+int connectToInternalService(int port, const char *serviceName) {
     printf("Connecting to Service '%s' at internal port %i\n", serviceName, port);
 
     int sockfd, n;
@@ -74,12 +74,6 @@ int connectToInternalService(int port, const char *serviceName, bool blocking) {
         printf("%s ERROR opening socket\n", serviceName);
         return 0;
     }
-    /* Blocking/non-blocking request is ignored
-    if (!blocking) {
-        int x = fcntl(sockfd, F_GETFL, 0);
-        fcntl(sockfd, F_SETFL, x | O_NONBLOCK);
-    }
-    */
 
     //server = gethostbyname("localhost");
     if (server == NULL) {
@@ -124,7 +118,7 @@ bool guaranteedSocketWrite(int sockfd, char *stream, int length) {
     int totalWritten = 0;
 
     while (totalWritten < length) {
-        thisWrite = write(sockfd+totalWritten, stream, length-totalWritten);
+        thisWrite = write(sockfd, stream+totalWritten, length-totalWritten);
 
         if (thisWrite < 0) //error while writing
             return false;
@@ -148,6 +142,7 @@ bool checkSocketHasData(int sockfd) {
     fd_set readfds;
     int socketsReady;
     //timeout of 1/2 a second
+    tv.tv_sec = 1;
     tv.tv_usec = 500000;
     FD_ZERO(&readfds);
     FD_SET(sockfd, &readfds);

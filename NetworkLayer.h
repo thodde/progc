@@ -5,8 +5,6 @@
 #include "Message.h"
 #include "Packet.h"
 
-#define PARTIAL_MESSAGE_BUFFER_LENGTH           1024
-
 /**
  *  This class encapsulates all the functionality of the network layer.  Unlike the Physical or Datalink Layer, this
  *  layer is directly incorporated into the application layer.
@@ -34,7 +32,7 @@ public:
      *  Checks to see if the Datalink Layer has sent any messages.
      *  @return NULL if no messages are present, one complete Message otherwise
      */
-    Message* checkForMessages();
+    Message* checkForMessages(bool &hasError);
 
 //    bool receivePacket(Packet *newPacket);
 
@@ -55,7 +53,7 @@ private:
     Message* convertPacketsToMessage(PacketNode *headptr);
 
 //needs to be at least twice as large as the Packet
-    char partialMessageBuffer[PARTIAL_MESSAGE_BUFFER_LENGTH];
+    char *partialMessageBuffer;
 
     int partialBufferUsed;
     PacketNode* receivedPackets;

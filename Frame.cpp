@@ -16,36 +16,52 @@ Frame::Frame(char* instream) {
 }
 
 char* Frame::serialize() {
-    char* outPacket = new char[MAX_FRAME_SIZE];
-    memset(outPacket, '\0', MAX_FRAME_SIZE);
-    char* packetCursor = outPacket;
-    memcpy(packetCursor, &frameId, sizeof(frameId));
-    packetCursor += sizeof(frameId);
-    memcpy(packetCursor, &type, sizeof(type));
-    packetCursor += sizeof(type);
-    memcpy(packetCursor, &finalFrame, sizeof(finalFrame));
-    packetCursor += sizeof(finalFrame);
-    memcpy(packetCursor, &payloadUsed, sizeof(payloadUsed));
-    packetCursor += sizeof(payloadUsed);
-    memcpy(packetCursor, payload, sizeof(char)*payloadUsed);
-    packetCursor += sizeof(char)*payloadUsed;
+/*
+    printf("About to serialize frame, this is the current payload: ");
+    for (int i = 0; i < payloadUsed; i++)
+        printf("%c", payload[i]);
+    printf("\n");
+    */
 
-    return outPacket;
+    char* outFrame = new char[MAX_FRAME_SIZE];
+    memset(outFrame, '\0', MAX_FRAME_SIZE);
+    char* frameCursor = outFrame;
+
+    memcpy(frameCursor, &frameId, sizeof(frameId));
+    frameCursor += sizeof(frameId);
+    memcpy(frameCursor, &type, sizeof(type));
+    frameCursor += sizeof(type);
+    memcpy(frameCursor, &finalFrame, sizeof(finalFrame));
+    frameCursor += sizeof(finalFrame);
+    memcpy(frameCursor, &payloadUsed, sizeof(payloadUsed));
+    frameCursor += sizeof(payloadUsed);
+    memcpy(frameCursor, payload, sizeof(char)*payloadUsed);
+    frameCursor += sizeof(char)*payloadUsed;
+
+    return outFrame;
 }
 
 bool Frame::deSerialize(char *stream) {
-    char *packetCursor = stream;
+    /*
+    printf("Frame string to be deserialized\n");
+    for(int i = 0; i < MAX_FRAME_SIZE; i++)
+        printf("%c", stream[i]);
+    printf("\n");
+    */
 
-    memcpy(&frameId, packetCursor, sizeof(frameId));
-    packetCursor += sizeof(frameId);
-    memcpy(&type, packetCursor, sizeof(type));
-    packetCursor += sizeof(type);
-    memcpy(&finalFrame, packetCursor, sizeof(finalFrame));
-    packetCursor += sizeof(finalFrame);
-    memcpy(&payloadUsed, packetCursor, sizeof(payloadUsed));
-    packetCursor += sizeof(payloadUsed);
-    memcpy(payload, packetCursor, sizeof(char)*payloadUsed);
-    packetCursor += sizeof(char)*payloadUsed;
+    char *frameCursor = stream;
+    memset(payload, '\0', MAX_FRAME_PAYLOAD);
+
+    memcpy(&frameId, frameCursor, sizeof(frameId));
+    frameCursor += sizeof(frameId);
+    memcpy(&type, frameCursor, sizeof(type));
+    frameCursor += sizeof(type);
+    memcpy(&finalFrame, frameCursor, sizeof(finalFrame));
+    frameCursor += sizeof(finalFrame);
+    memcpy(&payloadUsed, frameCursor, sizeof(payloadUsed));
+    frameCursor += sizeof(payloadUsed);
+    memcpy(payload, frameCursor, sizeof(char)*payloadUsed);
+    frameCursor += sizeof(char)*payloadUsed;
 
     return true;
 }
@@ -65,5 +81,6 @@ int Frame::setPayload(char* inStream, int size) {
         memcpy(payload, inStream, MAX_FRAME_PAYLOAD);
         payloadUsed = MAX_FRAME_PAYLOAD;
     }
+    //printf("Creating frame with a payload of size: %i created from a stream of size %i\n", payloadUsed, size);
     return payloadUsed;
 }

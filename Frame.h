@@ -3,9 +3,10 @@
 
 #include "common.h"
 
-#define FRAME_HEADER_SIZE         100
-
 typedef enum { Frame_Init, Frame_Data, Frame_Ack, Frame_Final } Frame_Type;
+
+#define     MAX_FRAME_SIZE          120
+#define     MAX_FRAME_PAYLOAD       100 //this will need to be lowered for the frame header
 
 struct Frame {
 public:
@@ -25,8 +26,7 @@ public:
     bool finalFrame;
 
     unsigned int frameId; // identifier used by sliding window protocol
-    char payload[MAX_FRAME_SIZE];
-    bool moreFrames;
+    char payload[MAX_FRAME_PAYLOAD];
     int payloadUsed;
 //    unsigned int checkByte; // byte used for error detection.  MOD 255 of the Frame object to 0
 
