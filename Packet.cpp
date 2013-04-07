@@ -34,8 +34,6 @@ char* Packet::serialize() {
 bool Packet::deSerialize(char *stream) {
     char *msgCursor = stream;
 
-    //printf("Deserializing packet id of %i\n", (int)msgCursor[0]);
-
     memcpy(&packetId, msgCursor, sizeof(packetId));
     msgCursor += sizeof(packetId);
     memcpy(&type, msgCursor, sizeof(type));

@@ -34,12 +34,6 @@ public:
      */
     Message* checkForMessages(bool &hasError);
 
-//    bool receivePacket(Packet *newPacket);
-
-
-
-//translates clientA to ip address
-
 private:
     // The internal file descriptor for the socket used to communicate with the datalink layer
     int internalFD;

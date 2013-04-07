@@ -220,7 +220,6 @@ Message* NetworkLayer::convertPacketsToMessage(PacketNode *headptr) {
     printf("Recovered Message (%i)\n", newMessage->messageId);
 
     return newMessage;
-//    return new Message(messagePayload);
 }
 
 

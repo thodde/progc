@@ -90,6 +90,7 @@ public:
     FrameNode* extractFrameList();
     Packet* convertFramesToPacket(FrameNode *headptr);
     bool receiveDataFromPhysicalLayer();
+    bool receiveDataFromNetworkLayer();
 
     int upBufferUsed;
     int downBufferUsed;

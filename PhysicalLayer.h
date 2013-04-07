@@ -60,7 +60,6 @@ private:
     // The file descriptor of the socket used to communicate with the datalink layer.
     int internalFD;
 
-    //bool appropriatePort();
     //char* stuffBits(char* inStream);
 
     //int internalPort;
