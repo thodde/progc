@@ -1,11 +1,12 @@
 #include "Packet.h"
 
-Packet::Packet(unsigned int newPacketId, bool isFinalPacket) {
+Packet::Packet(unsigned int newPacketId, bool isFinalPacket, Packet_Type newType) {
     //default values
     payloadUsed = 0;
     packetId = newPacketId;
     memset(payload, '\0', MAX_PACKET_PAYLOAD);
     finalPacket = isFinalPacket;
+    type = newType;
 }
 
 Packet::Packet(char* instream) {

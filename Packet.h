@@ -10,7 +10,7 @@ typedef enum { Packet_Init, Packet_Data, Packet_Ack, Packet_Final, Packet_Stack_
 
 struct Packet {
     //the packet id will need to be removed later, this should only exist at the DLL layer.
-    Packet(unsigned int newPacketId, bool isFinalPacket);
+    Packet(unsigned int newPacketId, bool isFinalPacket, Packet_Type newType);
     Packet(char* instream);
 
     /**

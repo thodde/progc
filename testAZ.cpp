@@ -46,7 +46,9 @@ int main (int argc, char *argv[]) {
 
     bool done = false;
     bool waitingForResponse = false;
-    char input;
+    //char input;
+    char input[100];
+    memset(input, '\0', 100);
 
     while (!done && !hasError) {
         if (waitingForResponse) {
@@ -58,36 +60,38 @@ int main (int argc, char *argv[]) {
             }
         }
         else {
-            if (input != '\n')
-                printf("Input (q - quit, r - send message, c - send connect message to PH, l - send listen message to PH, m - query for messages):\n");
+            //if (input != '\n')
+            printf("Input (q - quit, r - send message, c - send connect message to PH, l - send listen message to PH, m - query for messages):\n");
 
-            scanf("%c", &input);
+            scanf("%s", input);
             printf("\n");
-            if (input == 'r') {
+            if (input[0] == 'r') {
                 testMsg = new Message(Message_Join, testChar, strlen(testChar), messagesSent++);
                 myNL->sendMessage(testMsg);
-                waitingForResponse = true;
+                waitingForResponse = false;
                 printf("\nSending\n");
             }
-            else if (input == 'q')
+            else if (input[0] == 'q')
                 done = true;
-            else if (input == 'c') {
+            else if (input[0] == 'c') {
                 testMsg = createConnectToServerMessage((char*)"localhost", 2666);
                 myNL->sendMessage(testMsg);
                 printf("\nSent connect message\n");
             }
-            else if (input == 'l') {
+            else if (input[0] == 'l') {
                 testMsg = createListenForClientsMessage(2666);
                 myNL->sendMessage(testMsg);
                 printf("\nSent listen message\n");
             }
-            else if (input == 'm') {
-                response = myNL->checkForMessages(hasError);
-                if (response != NULL) {
-                    waitingForResponse = false;
-                    printf("successfully received message: \n%s\n", response->data);
-                }
+            else if (input[0] == 'm') {
+                waitingForResponse = true;
+                //response = myNL->checkForMessages(hasError);
+                //if (response != NULL) {
+                //    waitingForResponse = false;
+                //    printf("successfully received message: \n%s\n", response->data);
+                //}
             }
+            memset(input, '\0', 100);
         }
     }
 

@@ -67,7 +67,8 @@ PacketNode* NetworkLayer::convertControlMessageToPacket(Message *inMessage) {
 
     PacketNode *retval = new PacketNode();
     retval->next = NULL;
-    retval->data = new Packet(curPacketId++, true);
+    Packet_Type newType;
+    retval->data = new Packet(curPacketId++, true, Packet_Stack_Control);
     retval->data->setPayload(inMessage->data, inMessage->dataLength);
     retval->data->type = Packet_Stack_Control;
     return retval;
@@ -87,7 +88,7 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
     PacketNode *headPtr = new PacketNode();
     headPtr->next = NULL;
 
-    headPtr->data = new Packet(curPacketId++, false);
+    headPtr->data = new Packet(curPacketId++, false, Packet_Data);
 
     int bytesAdded = headPtr->data->setPayload(byteStream, serializedLength);
     byteStream += bytesAdded;
@@ -99,7 +100,7 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
         cursor->next = new PacketNode();
         cursor = cursor->next;
         cursor->next = NULL;
-        cursor->data = new Packet(curPacketId++, false);
+        cursor->data = new Packet(curPacketId++, false, Packet_Data);
         bytesAdded = cursor->data->setPayload(byteStream, serializedLength);
         byteStream += bytesAdded;
         serializedLength -= bytesAdded;

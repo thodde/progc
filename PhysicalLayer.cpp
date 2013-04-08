@@ -119,10 +119,6 @@ bool PhysicalLayer::processDownstreamData(int socketId) {
         return false;
     }
     else {
-        printf("Received data:\n");
-        for(int i = 0; i < 255; i++)
-            printf("%c", generalBuffer[i]);
-        printf("\n");
 
         memcpy(downBuffer+downBufferUsed, generalBuffer, n);
         downBufferUsed += n;
@@ -193,7 +189,7 @@ bool PhysicalLayer::processUpstreamData() {
             else {
                 if (myActivity == PH_Server) {
                     if (clientFDs[0] != 0) {
-                        printf("Forwarding to server\n");
+                        printf("Forwarding to client\n");
                         char* serializedFrame = receivedFrame[i]->serialize();
                         if (!guaranteedSocketWrite(clientFDs[0], serializedFrame, MAX_FRAME_SIZE))
                              printf("ERROR writing to socket");
@@ -242,7 +238,7 @@ bool PhysicalLayer::processControlFrame(Frame *inFrame) {
         }
         myActivity = PH_Server;
     }
-    else if (strcmp(inFrame->payload, "connect") >= 0) {
+    else if (strcmp(inFrame->payload, "connect") >= 0 && (externalFD == 0)) {
         int index = 8;
 
         while (inFrame->payload[index] != ' ')

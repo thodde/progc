@@ -1,12 +1,13 @@
 #include "common.h"
 #include "Frame.h"
 
-Frame::Frame(unsigned int newFrameId, bool isFinalFrame) {
+Frame::Frame(unsigned int newFrameId, bool isFinalFrame, Frame_Type newType) {
     //default values
     payloadUsed = 0;
     frameId = newFrameId;
     memset(payload, '\0', MAX_FRAME_PAYLOAD);
     finalFrame = isFinalFrame;
+    type = newType;
 }
 
 Frame::Frame(char* instream) {

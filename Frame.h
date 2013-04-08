@@ -11,7 +11,7 @@ typedef enum { Frame_Init, Frame_Data, Frame_Ack, Frame_Final, Frame_Stack_Contr
 struct Frame {
 public:
 
-    Frame(unsigned int newFrameId, bool isFinalFrame);
+    Frame(unsigned int newFrameId, bool isFinalFrame, Frame_Type newType);
     Frame(char* instream);
     Frame_Type type;
 

@@ -169,12 +169,14 @@ FrameNode* DatalinkLayer::convertControlPacketToFrame(Packet *inPacket) {
     if (inPacket == NULL)
         return NULL;
 
+    printf("Received Control Packet from Network\n");
+
     if (inPacket->type != Packet_Stack_Control)
         return NULL;
 
     FrameNode *retval = new FrameNode();
     retval->next = NULL;
-    retval->data = new Frame(curFrameId++, true);
+    retval->data = new Frame(curFrameId++, true, Frame_Stack_Control);
     retval->data->setPayload(inPacket->payload, inPacket->payloadUsed);
     retval->data->type = Frame_Stack_Control;
     return retval;
@@ -193,7 +195,7 @@ FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
     FrameNode *headPtr = new FrameNode();
     headPtr->next = NULL;
 
-    headPtr->data = new Frame(curFrameId++, false);
+    headPtr->data = new Frame(curFrameId++, false, Frame_Data);
 
     int bytesAdded = headPtr->data->setPayload(byteStream, serializedLength);
     byteStream += bytesAdded;
@@ -205,7 +207,7 @@ FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
         cursor->next = new FrameNode();
         cursor = cursor->next;
         cursor->next = NULL;
-        cursor->data = new Frame(curFrameId++, false);
+        cursor->data = new Frame(curFrameId++, false, Frame_Data);
         bytesAdded = cursor->data->setPayload(byteStream, serializedLength);
         byteStream += bytesAdded;
         serializedLength -= bytesAdded;
