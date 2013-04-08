@@ -19,7 +19,7 @@ bool NetworkLayer::initialize(int portInternal) {
     printf("Initializing Network Layer\n");
     internalFD = 0;
 
-    internalFD = connectToInternalService(portInternal, "Datalink Layer");
+    internalFD = connectToService(portInternal, "Datalink Layer", "localhost");
     if (internalFD == 0) {
         printf("Error, closing down\n");
         return false;
@@ -60,9 +60,26 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
     return true;
 }
 
+
+PacketNode* NetworkLayer::convertControlMessageToPacket(Message *inMessage) {
+    if (inMessage->type != Message_Stack_Control)
+        return NULL;
+
+    PacketNode *retval = new PacketNode();
+    retval->next = NULL;
+    retval->data = new Packet(curPacketId++, true);
+    retval->data->setPayload(inMessage->data, inMessage->dataLength);
+    retval->data->type = Packet_Stack_Control;
+    return retval;
+}
+
+
 PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
     if (inMessage == NULL)
         return NULL;
+
+    if (inMessage->type == Message_Stack_Control)
+        return convertControlMessageToPacket(inMessage);
 
     int serializedLength;
     char *byteStream = inMessage->serialize(serializedLength);

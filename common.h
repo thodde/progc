@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -26,7 +27,7 @@
  *  @param serviceName - a descriptive name used to log errors and successes during the setup process
  *  @returns the file descriptor of the socket for the connection or 0 if failed
  */
-int listenForInternalService(int port, const char *serviceName);
+int listenForService(int port, const char *serviceName, bool waitForConnection);
 
 /**
  *  Establishes a connection to an existing internal service listed at the indicated port.
@@ -34,7 +35,7 @@ int listenForInternalService(int port, const char *serviceName);
  *  @param serviceName - a descriptive name used to log errors and successes during the setup process
  *  @returns the file descriptor of the socket for the connection or 0 if failed
  */
-int connectToInternalService(int port, const char *serviceName);
+int connectToService(int port, const char *serviceName, const char *serverName);
 
 bool guaranteedSocketWrite(int sockfd, char *stream, int length);
 

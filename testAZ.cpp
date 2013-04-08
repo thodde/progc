@@ -9,40 +9,16 @@
 int main (int argc, char *argv[]) {
     printf("Starting test\n");
 
+    int dllPort = DLL_PORT;
+
+    if (argc > 1)
+        dllPort = atoi(argv[1]);
+
     NetworkLayer *myNL = new NetworkLayer();
-    if (!myNL->initialize(DLL_PORT)) {
+    if (!myNL->initialize(dllPort)) {
         delete myNL;
         return -1;
     }
-
-    /*
-
-What happens if a socket in the read set closes the connection? Well, in that case, select() returns with that socket descriptor set as "ready to read". When you actually do recv() from it, recv() will return 0. That's how you know the client has closed the connection.
-
-One more note of interest about select(): if you have a socket that is listen()ing, you can check to see if there is a new connection by putting that socket's file descriptor in the readfds set.
-
-
-    RECV notes
-    recv() returns the number of bytes actually read into the buffer, or -1 on error (with errno set, accordingly.)
-
-    Wait! recv() can return 0. This can mean only one thing: the remote side has closed the connection on you! A return value of 0 is recv()'s way of letting you know this has occurred.
-
-
-    // lose the pesky "Address already in use" error message
-    if (setsockopt(listener,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
-        perror("setsockopt");
-        exit(1);
-    }
-
-    hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
-
-    IP address conversion
-    Instead of gethostbyname(), use the superior getaddrinfo().
-
-    struct sockaddr_in sa; // IPv4
-    inet_pton(AF_INET, "192.0.2.1", &(sa.sin_addr)); // IPv4
-    */
-
 
     char *testChar = new char[2048];
     memset(testChar, '\0', 2048);
@@ -55,20 +31,21 @@ One more note of interest about select(): if you have a socket that is listen()i
     strcat(testChar, "the order \"1, 2\" at the opposite end. They will also be error-free. I'm so certain, in fact, they will be error-free, that I'm just going to put my fingers in my ears and chant ");
     strcat(testChar, "la la la la if anyone tries to claim otherwise. What uses stream sockets? Well, you may have heard of the telnet application, yes? It uses stream sockets. ");
 
-    printf("Sending body of size (%i): \n%s\n", (int)strlen(testChar), testChar);
+    //printf("Sending body of size (%i): \n%s\n", (int)strlen(testChar), testChar);
 
     unsigned int messagesSent = 0;
 
-    Message *testMsg = new Message(Message_Join, testChar, strlen(testChar), messagesSent++);
-    myNL->sendMessage(testMsg);
+    Message *testMsg;
+    //Message *testMsg = new Message(Message_Join, testChar, strlen(testChar), messagesSent++);
+    //myNL->sendMessage(testMsg);
 
     Message *response = NULL;
 
-    printf("Waiting for response\n");
+    //printf("Waiting for response\n");
     bool hasError = false;
 
     bool done = false;
-    bool waitingForResponse = true;
+    bool waitingForResponse = false;
     char input;
 
     while (!done && !hasError) {
@@ -82,7 +59,7 @@ One more note of interest about select(): if you have a socket that is listen()i
         }
         else {
             if (input != '\n')
-                printf("Input (q - quit, r - resend message):\n");
+                printf("Input (q - quit, r - send message, c - send connect message to PH, l - send listen message to PH, m - query for messages):\n");
 
             scanf("%c", &input);
             printf("\n");
@@ -90,10 +67,27 @@ One more note of interest about select(): if you have a socket that is listen()i
                 testMsg = new Message(Message_Join, testChar, strlen(testChar), messagesSent++);
                 myNL->sendMessage(testMsg);
                 waitingForResponse = true;
-                printf("\nResending\n");
+                printf("\nSending\n");
             }
             else if (input == 'q')
                 done = true;
+            else if (input == 'c') {
+                testMsg = createConnectToServerMessage((char*)"localhost", 2666);
+                myNL->sendMessage(testMsg);
+                printf("\nSent connect message\n");
+            }
+            else if (input == 'l') {
+                testMsg = createListenForClientsMessage(2666);
+                myNL->sendMessage(testMsg);
+                printf("\nSent listen message\n");
+            }
+            else if (input == 'm') {
+                response = myNL->checkForMessages(hasError);
+                if (response != NULL) {
+                    waitingForResponse = false;
+                    printf("successfully received message: \n%s\n", response->data);
+                }
+            }
         }
     }
 

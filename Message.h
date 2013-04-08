@@ -8,7 +8,7 @@
 //TODO validate this
 #define MESSAGE_HEADER_SIZE         20
 
-typedef enum { Message_Join, Message_Kick, Message_Whisper, Message_Speak, Message_List, Message_Quit } Message_Type;
+typedef enum { Message_Join, Message_Kick, Message_Whisper, Message_Speak, Message_List, Message_Quit, Message_Stack_Control } Message_Type;
 
 struct Message {
 public:
@@ -26,6 +26,9 @@ public:
     bool deSerialize(char *stream);
 };
 
+
+Message* createConnectToServerMessage(char *serverName, int serverPort);
+Message* createListenForClientsMessage(int serverPort);
 
 //arbitrary max message length 50 packets
 

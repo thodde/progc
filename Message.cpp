@@ -53,3 +53,20 @@ bool Message::deSerialize(char *stream) {
 
     return true;
 }
+
+
+Message* createConnectToServerMessage(char *serverName, int serverPort) {
+    char msgStr[80];
+    memset(msgStr, '\0', 80);
+    sprintf(msgStr, "connect %s %i", serverName, serverPort);
+
+    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0);
+}
+
+Message* createListenForClientsMessage(int serverPort) {
+    char msgStr[80];
+    memset(msgStr, '\0', 80);
+    sprintf(msgStr, "listen %i", serverPort);
+
+    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0);
+}

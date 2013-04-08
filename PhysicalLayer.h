@@ -12,6 +12,10 @@
 #include "common.h"
 #include "Frame.h"
 
+
+#define MAX_CONNECTIONS         10
+typedef enum { PH_Inactive, PH_Server, PH_Client } LayerActivity;
+
 /**
  *  The class encapsulates the Physical Layer (managing bits on the "wire").  It utilizes the same internal
  *  communication mechanisms as the Datalink Layer above.  As with the Datalink Layer, the Physical Layer runs in an
@@ -36,7 +40,7 @@ public:
      *  @param portInternal - the internal port used to communicate with the Datalink Layer
      *  @return true if successful, false otherwise
      */
-    bool initialize(int portExternal, int portInternal);
+    bool initialize(int portInternal);
 
     /**
      *  The main run body.  This function listens for communications on the external port or from the datalink layer
@@ -51,20 +55,42 @@ public:
     //bool receiveData();
 
 private:
+    /**
+     *  Handles messages from the application layer
+     */
+    bool processControlFrame(Frame *inFrame);
+
     // the external port being listened to for new clients if this is a server
-    int externalPort;
+    //int externalPort;
 
     // the socket description of the external port.  To be modified to allow multiple clients.
-    int externalFD;
+    //int externalFD;
 
     // The file descriptor of the socket used to communicate with the datalink layer.
     int internalFD;
 
+    //Used only by the server
+    int clientFDs[MAX_CONNECTIONS];
+
+    //Either the port the server is listening on, or the port the client is connected to the server on
+    int externalFD;
+
+    LayerActivity myActivity;
+
+
+    bool processUpstreamData();
+    bool processDownstreamData(int socketId);
+
     //char* stuffBits(char* inStream);
 
-    //int internalPort;
-    //int listeningSocketFileDescriptor;
-    //DatalinkLayer myDLL;
+
+    char *upBuffer;
+    int upBufferUsed;
+
+    char *downBuffer;
+    int downBufferUsed;
+    Frame* receivedFrame[100];
+    int framesReceived;
 };
 
 #endif

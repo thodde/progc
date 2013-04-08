@@ -84,6 +84,7 @@ public:
 
     // converts the packet from the Network layer to a consumable Frame by the Physical Layer
     FrameNode* convertPacketsToFrames(Packet* inPacket);
+    FrameNode* convertControlPacketToFrame(Packet *inPacket);
 
     bool addFrameReceived(Frame *inFrame);
     bool hasFinalFrame();

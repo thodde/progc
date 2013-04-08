@@ -1,6 +1,6 @@
 #include "common.h"
 
-int listenForInternalService(int port, const char *serviceName) {
+int listenForService(int port, const char *serviceName, bool waitForConnection) {
     printf("Starting to listen on port %i for internal service '%s'\n", port, serviceName);
 
     int sockfd, newsockfd;
@@ -32,6 +32,10 @@ int listenForInternalService(int port, const char *serviceName) {
 
     listen(sockfd,5);
     clilen = sizeof(cli_addr);
+
+    if (!waitForConnection)
+        return sockfd;
+
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr,&clilen);
     if (newsockfd < 0) {
         printf("%s ERROR on accept\n", serviceName);
@@ -56,12 +60,27 @@ int listenForInternalService(int port, const char *serviceName) {
     return newsockfd;
 }
 
-int connectToInternalService(int port, const char *serviceName) {
-    printf("Connecting to Service '%s' at internal port %i\n", serviceName, port);
+/*
+struct addrinfo {
+    int     ai_flags;
+    int     ai_family;
+    int     ai_socktype;
+    int     ai_protocol;
+    size_t  ai_addrlen;
+    struct  sockaddr *ai_addr;
+    char    *ai_canonname;     /* canonical name */
+//    struct  addrinfo *ai_next; /* this struct can form a linked list */
+//};
+
+
+int connectToService(int port, const char *serviceName, const char *serverName) {
+    if (strcmp(serverName, "localhost") >= 0)
+        printf("Connecting to Service '%s' at internal port %i\n", serviceName, port);
+    else
+        printf("Connecting to Service '%s' at host %s on port %i\n", serviceName, serverName, port);
+
 
     int sockfd, n;
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
 
     char buffer[256];
     if (port == 0) {
@@ -69,28 +88,47 @@ int connectToInternalService(int port, const char *serviceName) {
        return 0;
     }
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        printf("%s ERROR opening socket\n", serviceName);
-        return 0;
+    if (strcmp(serverName, "localhost") >= 0) {
+        struct sockaddr_in serv_addr;
+        bzero((char *) &serv_addr, sizeof(serv_addr));
+
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) {
+            printf("%s ERROR opening socket\n", serviceName);
+            return 0;
+        }
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_addr.s_addr = INADDR_ANY;
+        serv_addr.sin_port = htons(port);
+
+        if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
+            printf("%s ERROR (%i) connecting with message: %s\n", serviceName, errno, strerror(errno));
+            return 0;
+        }
     }
+    else {
+        struct sockaddr_in serv_addr;
+        bzero((char *) &serv_addr, sizeof(serv_addr));
 
-    //server = gethostbyname("localhost");
-    if (server == NULL) {
-        printf("%s ERROR, no such host\n", serviceName);
-        exit(0);
-    }
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) {
+            printf("%s ERROR opening socket\n", serviceName);
+            return 0;
+        }
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_addr.s_addr = INADDR_ANY;
 
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    //server->h_addr =
-    //bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-    serv_addr.sin_port = htons(port);
+        if(inet_pton(AF_INET, serverName, &serv_addr.sin_addr)<=0) {
+            printf("\n inet_pton error occured\n");
+            return 0;
+        }
 
-    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
-        printf("%s ERROR (%i) connecting with message: %s\n", serviceName, errno, strerror(errno));
-        return 0;
+        serv_addr.sin_port = htons(port);
+
+        if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
+            printf("%s ERROR (%i) connecting with message: %s\n", serviceName, errno, strerror(errno));
+            return 0;
+        }
     }
 
     bzero(buffer,256);

@@ -29,13 +29,13 @@ bool DatalinkLayer::initialize(int portInternalUp, int portInternalDown) {
     internalDownFD = 0;
 
 
-    internalDownFD = connectToInternalService(portInternalDown, "Physical Layer");
+    internalDownFD = connectToService(portInternalDown, "Physical Layer", "localhost");
     if (internalDownFD == 0) {
         printf("Error, closing down\n");
         return false;
     }
 
-    internalUpFD = listenForInternalService(portInternalUp, "Datalink Layer");
+    internalUpFD = listenForService(portInternalUp, "Datalink Layer", true);
     if (internalUpFD == 0){
         printf("Error, closing down\n");
         return false;
@@ -46,12 +46,9 @@ bool DatalinkLayer::initialize(int portInternalUp, int portInternalDown) {
 
 bool DatalinkLayer::run() {
     //begin main execution loop
-    char generalBuffer[255];
-    int n;
     upBufferUsed = 0;
     downBufferUsed = 0;
     packetsReceived = 0;
-    int serializedLength;
     framesReceived = NULL;
 
     while (internalUpFD != 0 && internalDownFD != 0) {
@@ -168,9 +165,27 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
     return true;
 }
 
+FrameNode* DatalinkLayer::convertControlPacketToFrame(Packet *inPacket) {
+    if (inPacket == NULL)
+        return NULL;
+
+    if (inPacket->type != Packet_Stack_Control)
+        return NULL;
+
+    FrameNode *retval = new FrameNode();
+    retval->next = NULL;
+    retval->data = new Frame(curFrameId++, true);
+    retval->data->setPayload(inPacket->payload, inPacket->payloadUsed);
+    retval->data->type = Frame_Stack_Control;
+    return retval;
+}
+
 FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
     if (inPacket == NULL)
         return NULL;
+
+    if (inPacket->type == Packet_Stack_Control)
+        return convertControlPacketToFrame(inPacket);
 
     int serializedLength = MAX_PACKET_SIZE;
     char *byteStream = inPacket->serialize();
@@ -285,10 +300,20 @@ FrameNode* DatalinkLayer::extractFrameList() {
 
 
 int main (int argc, char *argv[]) {
+    int dllPort = DLL_PORT;
+    int phPort = PH_PORT;
+
+    if (argc > 1) {
+        dllPort = atoi(argv[1]);
+    }
+    if (argc > 2) {
+        phPort = atoi(argv[2]);
+    }
+
     printf("Starting Datalink Layer\n");
 
     DatalinkLayer *myDL = new DatalinkLayer();
-    if (!myDL->initialize(DLL_PORT, PH_PORT)) {
+    if (!myDL->initialize(dllPort, phPort)) {
         delete myDL;
         return -1;
     }
