@@ -1,10 +1,14 @@
 #include "Packet.h"
 
-Packet::Packet(unsigned int newPacketId, bool isFinalPacket, Packet_Type newType) {
+Packet::Packet(unsigned int newPacketId, bool isFinalPacket, Packet_Type newType, char *newSourceName, char *newTargetName) {
     //default values
     payloadUsed = 0;
     packetId = newPacketId;
     memset(payload, '\0', MAX_PACKET_PAYLOAD);
+    memset(sourceName, '\0', 10);
+    memset(targetName, '\0', 10);
+    strcpy(sourceName, newSourceName);
+    strcpy(targetName, newTargetName);
     finalPacket = isFinalPacket;
     type = newType;
 }
@@ -24,6 +28,10 @@ char* Packet::serialize() {
     msgCursor += sizeof(type);
     memcpy(msgCursor, &finalPacket, sizeof(finalPacket));
     msgCursor += sizeof(finalPacket);
+    memcpy(msgCursor, sourceName, sizeof(char)*10);
+    msgCursor += sizeof(char)*10;
+    memcpy(msgCursor, targetName, sizeof(char)*10);
+    msgCursor += sizeof(char)*10;
     memcpy(msgCursor, &payloadUsed, sizeof(payloadUsed));
     msgCursor += sizeof(payloadUsed);
     memcpy(msgCursor, payload, sizeof(char)*payloadUsed);
@@ -41,6 +49,10 @@ bool Packet::deSerialize(char *stream) {
     msgCursor += sizeof(type);
     memcpy(&finalPacket, msgCursor, sizeof(finalPacket));
     msgCursor += sizeof(finalPacket);
+    memcpy(sourceName, msgCursor, sizeof(char)*10);
+    msgCursor += sizeof(char)*10;
+    memcpy(targetName, msgCursor, sizeof(char)*10);
+    msgCursor += sizeof(char)*10;
     memcpy(&payloadUsed, msgCursor, sizeof(payloadUsed));
     msgCursor += sizeof(payloadUsed);
     memcpy(payload, msgCursor, sizeof(char)*payloadUsed);

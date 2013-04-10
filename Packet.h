@@ -4,13 +4,13 @@
 #include "common.h"
 
 #define     MAX_PACKET_SIZE         192
-#define     MAX_PACKET_PAYLOAD      160 //this will need to be lowered due to the packet header
+#define     MAX_PACKET_PAYLOAD      150 //this will need to be lowered due to the packet header
 
-typedef enum { Packet_Init, Packet_Data, Packet_Ack, Packet_Final, Packet_Stack_Control } Packet_Type;
+typedef enum { Packet_Join, Packet_Data, Packet_Ack, Packet_Final, Packet_Stack_Control } Packet_Type;
 
 struct Packet {
     //the packet id will need to be removed later, this should only exist at the DLL layer.
-    Packet(unsigned int newPacketId, bool isFinalPacket, Packet_Type newType);
+    Packet(unsigned int newPacketId, bool isFinalPacket, Packet_Type newType, char *newSourceName, char *newTargetName);
     Packet(char* instream);
 
     /**
@@ -25,6 +25,8 @@ struct Packet {
 
     unsigned int packetId;
     int payloadUsed;
+    char sourceName[10];
+    char targetName[10];
     Packet_Type type;
     char payload[MAX_PACKET_PAYLOAD];    // minus overhead
 };

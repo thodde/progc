@@ -16,6 +16,11 @@
 #define MAX_CONNECTIONS         10
 typedef enum { PH_Inactive, PH_Server, PH_Client } LayerActivity;
 
+struct ClientConnection {
+    int socketFD;
+    char clientName[10];
+};
+
 /**
  *  The class encapsulates the Physical Layer (managing bits on the "wire").  It utilizes the same internal
  *  communication mechanisms as the Datalink Layer above.  As with the Datalink Layer, the Physical Layer runs in an
@@ -70,7 +75,7 @@ private:
     int internalFD;
 
     //Used only by the server
-    int clientFDs[MAX_CONNECTIONS];
+    ClientConnection* clientFDs[MAX_CONNECTIONS];
 
     //Either the port the server is listening on, or the port the client is connected to the server on
     int externalFD;

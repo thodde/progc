@@ -43,9 +43,11 @@ int main (int argc, char *argv[]) {
 
     //printf("Waiting for response\n");
     bool hasError = false;
+    bool isServer = false;
 
     bool done = false;
     bool waitingForResponse = false;
+    bool sentJoinMessage = false;
     //char input;
     char input[100];
     memset(input, '\0', 100);
@@ -66,7 +68,10 @@ int main (int argc, char *argv[]) {
             scanf("%s", input);
             printf("\n");
             if (input[0] == 'r') {
-                testMsg = new Message(Message_Join, testChar, strlen(testChar), messagesSent++);
+                if (isServer)
+                    testMsg = new Message(Message_Speak, testChar, strlen(testChar), messagesSent++, (char*)"server", (char*)"clientA");
+                else
+                    testMsg = new Message(Message_Speak, testChar, strlen(testChar), messagesSent++, (char*)"clientA", (char*)"server");
                 myNL->sendMessage(testMsg);
                 waitingForResponse = false;
                 printf("\nSending\n");
@@ -74,14 +79,22 @@ int main (int argc, char *argv[]) {
             else if (input[0] == 'q')
                 done = true;
             else if (input[0] == 'c') {
-                testMsg = createConnectToServerMessage((char*)"localhost", 2666);
-                myNL->sendMessage(testMsg);
-                printf("\nSent connect message\n");
+                if(!sentJoinMessage) {
+                    testMsg = createConnectToServerMessage((char*)"localhost", 2666);
+                    isServer = false;
+                    myNL->sendMessage(testMsg);
+                    printf("\nSent connect message\n");
+                    sentJoinMessage = true;
+                }
             }
             else if (input[0] == 'l') {
-                testMsg = createListenForClientsMessage(2666);
-                myNL->sendMessage(testMsg);
-                printf("\nSent listen message\n");
+                if (!sentJoinMessage) {
+                    testMsg = createListenForClientsMessage(2666);
+                    isServer = true;
+                    myNL->sendMessage(testMsg);
+                    printf("\nSent listen message\n");
+                    sentJoinMessage = true;
+                }
             }
             else if (input[0] == 'm') {
                 waitingForResponse = true;

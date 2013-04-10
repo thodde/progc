@@ -68,7 +68,7 @@ PacketNode* NetworkLayer::convertControlMessageToPacket(Message *inMessage) {
     PacketNode *retval = new PacketNode();
     retval->next = NULL;
     Packet_Type newType;
-    retval->data = new Packet(curPacketId++, true, Packet_Stack_Control);
+    retval->data = new Packet(curPacketId++, true, Packet_Stack_Control, inMessage->sourceName, inMessage->targetName);
     retval->data->setPayload(inMessage->data, inMessage->dataLength);
     retval->data->type = Packet_Stack_Control;
     return retval;
@@ -88,7 +88,10 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
     PacketNode *headPtr = new PacketNode();
     headPtr->next = NULL;
 
-    headPtr->data = new Packet(curPacketId++, false, Packet_Data);
+    if (inMessage->type == Message_Join)
+        headPtr->data = new Packet(curPacketId++, false, Packet_Join, inMessage->sourceName, inMessage->targetName);
+    else
+        headPtr->data = new Packet(curPacketId++, false, Packet_Data, inMessage->sourceName, inMessage->targetName);
 
     int bytesAdded = headPtr->data->setPayload(byteStream, serializedLength);
     byteStream += bytesAdded;
@@ -100,7 +103,7 @@ PacketNode* NetworkLayer::convertMessageToPackets(Message *inMessage) {
         cursor->next = new PacketNode();
         cursor = cursor->next;
         cursor->next = NULL;
-        cursor->data = new Packet(curPacketId++, false, Packet_Data);
+        cursor->data = new Packet(curPacketId++, false, Packet_Data, inMessage->sourceName, inMessage->targetName);
         bytesAdded = cursor->data->setPayload(byteStream, serializedLength);
         byteStream += bytesAdded;
         serializedLength -= bytesAdded;
@@ -199,7 +202,21 @@ bool NetworkLayer::hasFinalPacket() {
 }
 
 
+Message* NetworkLayer::convertPacketJoinToMessage(PacketNode *headptr) {
+    if (headptr == NULL)
+        return NULL;
+    if (headptr->data->type != Packet_Join)
+        return NULL;
+
+    return new Message(Message_Join, headptr->data->payload, headptr->data->payloadUsed, 0, headptr->data->sourceName, headptr->data->targetName);
+}
+
 Message* NetworkLayer::convertPacketsToMessage(PacketNode *headptr) {
+    if (headptr == NULL)
+        return NULL;
+    if (headptr->data->type == Packet_Join)
+        return convertPacketJoinToMessage(headptr);
+
     PacketNode *cursor = headptr;
     int bytesNeeded = 0;
 

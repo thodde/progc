@@ -1,11 +1,15 @@
 #include "common.h"
 #include "Frame.h"
 
-Frame::Frame(unsigned int newFrameId, bool isFinalFrame, Frame_Type newType) {
+Frame::Frame(unsigned int newFrameId, bool isFinalFrame, Frame_Type newType, char *newSourceName, char *newTargetName) {
     //default values
     payloadUsed = 0;
     frameId = newFrameId;
     memset(payload, '\0', MAX_FRAME_PAYLOAD);
+    memset(sourceName, '\0', 10);
+    memset(targetName, '\0', 10);
+    memcpy(sourceName, newSourceName, 10);
+    memcpy(targetName, newTargetName, 10);
     finalFrame = isFinalFrame;
     type = newType;
 }
@@ -27,6 +31,10 @@ char* Frame::serialize() {
     frameCursor += sizeof(type);
     memcpy(frameCursor, &finalFrame, sizeof(finalFrame));
     frameCursor += sizeof(finalFrame);
+    memcpy(frameCursor, sourceName, sizeof(char)*10);
+    frameCursor += sizeof(char)*10;
+    memcpy(frameCursor, targetName, sizeof(char)*10);
+    frameCursor += sizeof(char)*10;
     memcpy(frameCursor, &payloadUsed, sizeof(payloadUsed));
     frameCursor += sizeof(payloadUsed);
     memcpy(frameCursor, payload, sizeof(char)*payloadUsed);
@@ -38,6 +46,8 @@ char* Frame::serialize() {
 bool Frame::deSerialize(char *stream) {
     char *frameCursor = stream;
     memset(payload, '\0', MAX_FRAME_PAYLOAD);
+    memset(sourceName, '\0', 10);
+    memset(targetName, '\0', 10);
 
     memcpy(&frameId, frameCursor, sizeof(frameId));
     frameCursor += sizeof(frameId);
@@ -45,6 +55,10 @@ bool Frame::deSerialize(char *stream) {
     frameCursor += sizeof(type);
     memcpy(&finalFrame, frameCursor, sizeof(finalFrame));
     frameCursor += sizeof(finalFrame);
+    memcpy(sourceName, frameCursor, sizeof(char)*10);
+    frameCursor += sizeof(char)*10;
+    memcpy(targetName, frameCursor, sizeof(char)*10);
+    frameCursor += sizeof(char)*10;
     memcpy(&payloadUsed, frameCursor, sizeof(payloadUsed));
     frameCursor += sizeof(payloadUsed);
     memcpy(payload, frameCursor, sizeof(char)*payloadUsed);

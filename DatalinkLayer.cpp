@@ -90,7 +90,7 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
             upBuffer = tmpBuffer;
             upBufferUsed -= MAX_PACKET_SIZE;
 
-            printf("Received Packet (%i) of payload (%i) From Network Layer\n", receivedPackets[packetsReceived - 1]->packetId, receivedPackets[packetsReceived - 1]->payloadUsed);
+            printf("Received Packet (%i) of payload (%i) final ?(%s) From Network Layer\n", receivedPackets[packetsReceived - 1]->packetId, receivedPackets[packetsReceived - 1]->payloadUsed, (receivedPackets[packetsReceived - 1]->finalPacket ? "yes" : "no"));
         }
 
         for (int i = 0; i < packetsReceived; i++) {
@@ -140,7 +140,7 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
             Frame *newFrame = new Frame(downBuffer);
             addFrameReceived(newFrame);
 
-            printf("Received Frame from Physical Layer Frame (%i) with payload (%i)\n", newFrame->frameId, newFrame->payloadUsed);
+            printf("Received Frame from Physical Layer Frame (%i) with payload (%i) final? (%s)\n", newFrame->frameId, newFrame->payloadUsed, (newFrame->finalFrame ? "yes" : "no"));
 
             //shift buffer
             char *tmpBuffer = new char[DEFAULT_BUFFER_SIZE];
@@ -176,7 +176,7 @@ FrameNode* DatalinkLayer::convertControlPacketToFrame(Packet *inPacket) {
 
     FrameNode *retval = new FrameNode();
     retval->next = NULL;
-    retval->data = new Frame(curFrameId++, true, Frame_Stack_Control);
+    retval->data = new Frame(curFrameId++, true, Frame_Stack_Control, inPacket->sourceName, inPacket->targetName);
     retval->data->setPayload(inPacket->payload, inPacket->payloadUsed);
     retval->data->type = Frame_Stack_Control;
     return retval;
@@ -195,7 +195,10 @@ FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
     FrameNode *headPtr = new FrameNode();
     headPtr->next = NULL;
 
-    headPtr->data = new Frame(curFrameId++, false, Frame_Data);
+    if (inPacket->type == Packet_Join)
+        headPtr->data = new Frame(curFrameId++, false, Frame_Join, inPacket->sourceName, inPacket->targetName);
+    else
+        headPtr->data = new Frame(curFrameId++, false, Frame_Data, inPacket->sourceName, inPacket->targetName);
 
     int bytesAdded = headPtr->data->setPayload(byteStream, serializedLength);
     byteStream += bytesAdded;
@@ -207,7 +210,7 @@ FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
         cursor->next = new FrameNode();
         cursor = cursor->next;
         cursor->next = NULL;
-        cursor->data = new Frame(curFrameId++, false, Frame_Data);
+        cursor->data = new Frame(curFrameId++, false, Frame_Data, inPacket->sourceName, inPacket->targetName);
         bytesAdded = cursor->data->setPayload(byteStream, serializedLength);
         byteStream += bytesAdded;
         serializedLength -= bytesAdded;
@@ -217,7 +220,23 @@ FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
     return headPtr;
 }
 
+Packet* DatalinkLayer::convertFrameJoinToPacket(FrameNode *headptr) {
+    if (headptr == NULL)
+        return NULL;
+    if (headptr->data->type != Frame_Join)
+        return NULL;
+
+    Packet *retval = new Packet(0, true, Packet_Join, headptr->data->sourceName, headptr->data->targetName);
+    retval->setPayload(headptr->data->payload, headptr->data->payloadUsed);
+    return retval;
+}
+
 Packet* DatalinkLayer::convertFramesToPacket(FrameNode *headptr) {
+    if (headptr == NULL)
+        return NULL;
+    if (headptr->data->type == Frame_Join)
+        return convertFrameJoinToPacket(headptr);
+
     FrameNode *cursor = headptr;
 
     char packetStream[MAX_PACKET_SIZE];

@@ -3,17 +3,19 @@
 
 #include "common.h"
 
-typedef enum { Frame_Init, Frame_Data, Frame_Ack, Frame_Final, Frame_Stack_Control } Frame_Type;
+typedef enum { Frame_Join, Frame_Data, Frame_Ack, Frame_Final, Frame_Stack_Control } Frame_Type;
 
-#define     MAX_FRAME_SIZE          120
+#define     MAX_FRAME_SIZE          140
 #define     MAX_FRAME_PAYLOAD       100 //this will need to be lowered for the frame header
 
 struct Frame {
 public:
 
-    Frame(unsigned int newFrameId, bool isFinalFrame, Frame_Type newType);
+    Frame(unsigned int newFrameId, bool isFinalFrame, Frame_Type newType, char *newSourceName, char *newTargetName);
     Frame(char* instream);
     Frame_Type type;
+    char sourceName[10];
+    char targetName[10];
 
     /**
      *  Read as far into the stream as possible and load into playload.  Return number of chars loaded into payload.

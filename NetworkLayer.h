@@ -44,8 +44,9 @@ private:
 
     // converts the message from the Application layer to a consumable message by the Datalink Layer
     PacketNode* convertMessageToPackets(Message *inMessage);
-    Message* convertPacketsToMessage(PacketNode *headptr);
     PacketNode* convertControlMessageToPacket(Message *inMessage);
+    Message* convertPacketsToMessage(PacketNode *headptr);
+    Message* convertPacketJoinToMessage(PacketNode *headptr);
 
 //needs to be at least twice as large as the Packet
     char *partialMessageBuffer;

@@ -90,6 +90,7 @@ public:
     bool hasFinalFrame();
     FrameNode* extractFrameList();
     Packet* convertFramesToPacket(FrameNode *headptr);
+    Packet* convertFrameJoinToPacket(FrameNode *headptr);
     bool receiveDataFromPhysicalLayer();
     bool receiveDataFromNetworkLayer();
 

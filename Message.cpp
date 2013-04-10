@@ -2,7 +2,7 @@
 #include "Message.h"
 
 
-Message::Message(Message_Type newType, char* newData, int size, unsigned int newId) {
+Message::Message(Message_Type newType, char* newData, int size, unsigned int newId, char *newSourceName, char *newTargetName) {
     if (size < 0)
         return;
 
@@ -11,6 +11,10 @@ Message::Message(Message_Type newType, char* newData, int size, unsigned int new
     data = new char[size];
     memset(data, '\0', size);
     memcpy(data, newData, size*sizeof(char));
+    memset(sourceName, '\0', 10);
+    memset(targetName, '\0', 10);
+    memcpy(sourceName, newSourceName, 10);
+    memcpy(targetName, newTargetName, 10);
     dataLength = size;
 };
 
@@ -28,6 +32,10 @@ char* Message::serialize(int &serializedLength) {
     cursor += sizeof(type);
     memcpy(cursor, &messageId, sizeof(messageId));
     cursor += sizeof(messageId);
+    memcpy(cursor, sourceName, sizeof(char)*10);
+    cursor += sizeof(char)*10;
+    memcpy(cursor, targetName, sizeof(char)*10);
+    cursor += sizeof(char)*10;
     memcpy(cursor, &dataLength, sizeof(dataLength));
     cursor += sizeof(dataLength);
     memcpy(cursor, data, sizeof(char)*dataLength);
@@ -44,6 +52,10 @@ bool Message::deSerialize(char *stream) {
     cursor += sizeof(type);
     memcpy(&messageId, cursor, sizeof(messageId));
     cursor += sizeof(messageId);
+    memcpy(sourceName, cursor, sizeof(char)*10);
+    cursor += sizeof(char)*10;
+    memcpy(targetName, cursor, sizeof(char)*10);
+    cursor += sizeof(char)*10;
     memcpy(&dataLength, cursor, sizeof(dataLength));
     cursor += sizeof(dataLength);
     data = new char[dataLength];
@@ -60,7 +72,7 @@ Message* createConnectToServerMessage(char *serverName, int serverPort) {
     memset(msgStr, '\0', 80);
     sprintf(msgStr, "connect %s %i", serverName, serverPort);
 
-    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0);
+    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, "clientA", "server");
 }
 
 Message* createListenForClientsMessage(int serverPort) {
@@ -68,5 +80,5 @@ Message* createListenForClientsMessage(int serverPort) {
     memset(msgStr, '\0', 80);
     sprintf(msgStr, "listen %i", serverPort);
 
-    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0);
+    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, "server", "");
 }
