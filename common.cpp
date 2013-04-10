@@ -180,8 +180,10 @@ bool checkSocketHasData(int sockfd) {
     fd_set readfds;
     int socketsReady;
     //timeout of 1/2 a second
-    tv.tv_sec = 1;
-    tv.tv_usec = 500000;
+//    tv.tv_sec = 1;
+//    tv.tv_usec = 500000;
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
     FD_ZERO(&readfds);
     FD_SET(sockfd, &readfds);
     socketsReady = select(sockfd+1, &readfds, NULL, NULL, &tv);
