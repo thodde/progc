@@ -278,7 +278,10 @@ bool DatalinkLayer::hasFinalFrame() {
 }
 
 bool DatalinkLayer::addFrameReceived(Frame *inFrame) {
+    int currentCount;
+
     if (framesReceived == NULL) {
+	currentCount = 1;
         framesReceived = new FrameNode();
         framesReceived->next = NULL;
         framesReceived->data = inFrame;
@@ -287,19 +290,29 @@ bool DatalinkLayer::addFrameReceived(Frame *inFrame) {
 
     FrameNode *cursor = framesReceived;
 
-    while(cursor->next != NULL)
+    while(cursor->next != NULL) {
         cursor = cursor->next;
+	currentCount++;
+    }
 
-    cursor->next = new FrameNode();
-    cursor = cursor->next;
-    cursor->next = NULL;
-    cursor->data = inFrame;
-    return true;
+    // make sure there are no more than MAX_WINDOW_SIZE frames
+    // in the window at any point
+    if(currentCount < MAX_WINDOW_SIZE) {
+	    cursor->next = new FrameNode();
+	    cursor = cursor->next;
+	    cursor->next = NULL;
+	    cursor->data = inFrame;
+	    return true;
+    }
+    else {
+	return false;
+    }
 }
 
 FrameNode* DatalinkLayer::extractFrameList() {
-    if (framesReceived == NULL)
-        return NULL;
+    if (framesReceived == NULL) {
+	return NULL;
+    }
 
     FrameNode *frameList = framesReceived;
     FrameNode *cursor = framesReceived;
@@ -317,8 +330,6 @@ FrameNode* DatalinkLayer::extractFrameList() {
     //no final packet found
     return NULL;
 }
-
-
 
 int main (int argc, char *argv[]) {
     int dllPort = DLL_PORT;

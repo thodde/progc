@@ -14,6 +14,8 @@
 #include "Frame.h"
 #include "Packet.h"
 
+#define MAX_WINDOW_SIZE 4
+
 
 //IP address of next hop, plus info for next level up
 
