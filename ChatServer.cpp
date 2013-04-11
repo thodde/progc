@@ -17,7 +17,38 @@ int ChatServer::run(int argc, char *argv[]) {
        
         //assign a value to the port
         port = atoi(argv[1]);
+
+	//create an object for accessing the data link layer
+        NetworkLayer* networkLayer = new NetworkLayer();
+        if(!networkLayer->initialize(DLL_PORT)) {
+            perror("Error, could not connect to internal services layers\n");
+            delete networkLayer;
+            exit(1);
+        }
+
         return 0;
+}
+
+void receive_message(Message* m) {
+    if(m->type == Message_Join) {
+        printf("Client joined the chat!\n");
+    }
+    else if(m->type == Message_Speak) {
+        printf("%s\n", m->data);
+    }
+    else if(m->type == Message_Kick) {
+        printf("Client is being removed from the chat room by the administrator!\n");
+    }
+    else if(m->type == Message_Whisper) {
+        printf("Private Message from Client: %s\n", m->data);
+    }
+    else if(m->type == Message_List) {
+        printf("Listing users currently connected to chat room:\n");
+    }
+    else if(m->type == Message_Quit) {
+        printf("Exiting...\n");
+        exit(0);
+    }
 }
 
 /**

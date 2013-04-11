@@ -12,7 +12,8 @@
 #include <arpa/inet.h>
 
 #include "common.h"
-//#include "DatalinkLayer.h"
+#include "Message.h"
+#include "NetworkLayer.h"
 
 class ChatServer {
 	public:
@@ -21,7 +22,6 @@ class ChatServer {
 	private:
    		int port;
     		bool isServer;
-//    		DatalinkLayer myDLL;
 };
 
 #endif
