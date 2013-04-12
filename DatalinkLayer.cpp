@@ -69,6 +69,10 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
     char generalBuffer[255];
     memset(generalBuffer, '\0', 255);
     int n = read(internalUpFD, generalBuffer, 255);
+    FrameNode* slidingWindow[MAX_WINDOW_SIZE];  
+    FrameNode* queuedFrames[10]; //start with 10 and increase later 
+    int queueLength = 0; 
+
     if (n == 0) {
         //error, socket was closed
         printf("Connection to Network Layer lost, exiting...\n");
@@ -98,14 +102,30 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
             FrameNode* currentFrame = convertPacketsToFrames(receivedPackets[i]);
 
             while (currentFrame != NULL) {
+                //add the current frame to the sliding window
+                //if(numberOfFrames < MAX_WINDOW_SIZE) {
+                //    slidingWindow[numberOfFrames] = currentFrame;
+                //    numberOfFrames++;
+                //}
+                //else {
+                    //create a queue of frames that have not been added to the window yet
+                //    queuedFrames[queueLength] = currentFrame;
+                //    queueLength++;
+                //}
+
                 char* serializeFrame = currentFrame->data->serialize();
                 //printf("=========================================\n");
 
                 printf("Forwarding Physical Layer Frame (%i) of with payload of size: %i\n", currentFrame->data->frameId, currentFrame->data->payloadUsed);
 
                 if (!guaranteedSocketWrite(internalDownFD, serializeFrame, MAX_FRAME_SIZE))
-                     printf("ERROR writing to socket");
-                currentFrame = currentFrame->next;
+                     printf("ERROR writing to socket");  
+                //else {
+                //    delete slidingWindow[numberOfFrames];
+                //    numberOfFrames--;
+                //}  
+
+                currentFrame = currentFrame->next;   
             }
 
     //TODO MEMORY LEAKS!!!
@@ -120,11 +140,12 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
     }
 }
 
-
 bool DatalinkLayer::receiveDataFromPhysicalLayer() {
     char generalBuffer[255];
     memset(generalBuffer, '\0', 255);
     int n = read(internalDownFD, generalBuffer, 255);
+    int previousFrameId = 0;
+
     if (n == 0) {
         //error, socket was closed
         printf("Connection to Physical Layer lost, exiting...\n");
@@ -138,9 +159,27 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
         //process only complete messages
         while (downBufferUsed >= MAX_FRAME_SIZE) {
             Frame *newFrame = new Frame(downBuffer);
-            addFrameReceived(newFrame);
 
             printf("Received Frame from Physical Layer Frame (%i) with payload (%i) final? (%s)\n", newFrame->frameId, newFrame->payloadUsed, (newFrame->finalFrame ? "yes" : "no"));
+            
+            //if an ACK is received, display it for its respective frame
+            if(newFrame->type == Frame_Ack) {
+                printf("Received acknowledgement for frame (%i)\n", newFrame->frameId);
+                previousFrameId = -1;
+            }
+
+            //if the current frame is not an ACK, add it to the list and send a new ACK for this frame
+            if(newFrame->type != Frame_Ack) {
+                addFrameReceived(newFrame);
+                //make sure to send an ack frame back to the sender once a frame is received
+                Frame* ackFrame = new Frame(newFrame->frameId, true, Frame_Ack, newFrame->targetName, newFrame->sourceName);
+                char* serializedAckFrame = ackFrame->serialize();
+
+                if (!guaranteedSocketWrite(internalDownFD, serializedAckFrame, MAX_FRAME_SIZE))
+                         printf("ERROR writing to socket"); 
+                printf("Sending ack for frame (%i).\n", newFrame->frameId);
+                previousFrameId = newFrame->frameId;
+            }
 
             //shift buffer
             char *tmpBuffer = new char[DEFAULT_BUFFER_SIZE];
@@ -151,7 +190,7 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
             downBufferUsed -= MAX_FRAME_SIZE;
         }
 
-    //TODO this should change to whatever receiving intelligence we use
+        //TODO this should change to whatever receiving intelligence we use
         while (hasFinalFrame()) {
             FrameNode *frameList = extractFrameList();
             Packet *outPacket = convertFramesToPacket(frameList);
@@ -278,10 +317,7 @@ bool DatalinkLayer::hasFinalFrame() {
 }
 
 bool DatalinkLayer::addFrameReceived(Frame *inFrame) {
-    int currentCount;
-
     if (framesReceived == NULL) {
-	currentCount = 1;
         framesReceived = new FrameNode();
         framesReceived->next = NULL;
         framesReceived->data = inFrame;
@@ -292,21 +328,13 @@ bool DatalinkLayer::addFrameReceived(Frame *inFrame) {
 
     while(cursor->next != NULL) {
         cursor = cursor->next;
-	currentCount++;
     }
 
-    // make sure there are no more than MAX_WINDOW_SIZE frames
-    // in the window at any point
-    if(currentCount < MAX_WINDOW_SIZE) {
-	    cursor->next = new FrameNode();
-	    cursor = cursor->next;
-	    cursor->next = NULL;
-	    cursor->data = inFrame;
-	    return true;
-    }
-    else {
-	return false;
-    }
+    cursor->next = new FrameNode();
+    cursor = cursor->next;
+    cursor->next = NULL;
+    cursor->data = inFrame;
+    return true;
 }
 
 FrameNode* DatalinkLayer::extractFrameList() {

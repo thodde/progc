@@ -100,6 +100,7 @@ public:
     int downBufferUsed;
     Packet* receivedPackets[100];
     int packetsReceived;
+    int numberOfFrames;
 
 };
 
