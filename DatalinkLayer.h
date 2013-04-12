@@ -100,9 +100,13 @@ public:
     int downBufferUsed;
     Packet* receivedPackets[100];
     int packetsReceived;
+
     long statsFramesSent, statsFramesReceived, statsPacketsReceived, statsPacketsSent, statsBytesSent, statsBytesReceived;
     long statsFrameOverheadSent, statsFrameOverheadReceived;
     long statsErrorFramesDetected;
+
+    int numberOfFrames;
+
 
 };
 
