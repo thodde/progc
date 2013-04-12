@@ -1,16 +1,30 @@
 
+#include <math.h>
 #include "PhysicalLayer.h"
 
-PhysicalLayer::PhysicalLayer() {
+
+PhysicalLayer::PhysicalLayer(int newByteErrorRate, int newFrameErrorRate) {
     myActivity = PH_Inactive;
     internalFD = 0;
     externalFD = 0;
+    byteErrorRate = newByteErrorRate;
+    frameErrorRate = newFrameErrorRate;
+    statsFramesSent = 0;
+    statsFramesReceived = 0;
+    statsBytesSent = 0;
+    statsBytesReceived = 0;
+    statsFramesDropped = 0;
+    statsBytesChanged = 0;
 
     for (int i = 0; i < MAX_CONNECTIONS; i++)
         clientFDs[i] = NULL;
 }
 
 PhysicalLayer::~PhysicalLayer() {
+    printf("Runtime Stats\nSent\tFrames: %li Bytes %li\n", statsFramesSent, statsBytesSent);
+    printf("Received\tFrames: %li Bytes %li\nErrors\tBytes Changed: %li Frames Dropped: %li\n", statsFramesReceived,
+        statsBytesReceived, statsBytesChanged, statsFramesDropped);
+
     if (externalFD != 0)
         close(externalFD);
     if (internalFD != 0)
@@ -49,7 +63,7 @@ bool PhysicalLayer::run() {
     int n;
     upBufferUsed = 0;
     downBufferUsed = 0;
-    framesReceived = 0;
+    bufferFramesReceived = 0;
     int serializedLength;
 
     while (internalFD != 0) {
@@ -126,14 +140,16 @@ bool PhysicalLayer::processDownstreamData(int socketId) {
         return false;
     }
     else {
+        statsBytesReceived += n;
         memcpy(downBuffer+downBufferUsed, generalBuffer, n);
         downBufferUsed += n;
         memset(generalBuffer, '\0', MAX_FRAME_SIZE);
 
         //process only complete messages
         while (downBufferUsed >= MAX_FRAME_SIZE) {
-            receivedFrame[framesReceived++] = new Frame(downBuffer);
-            printf("Received From External Frame (%i) with payload (%i)\n", receivedFrame[framesReceived - 1]->frameId, receivedFrame[framesReceived - 1]->payloadUsed);
+            receivedFrame[bufferFramesReceived++] = new Frame(downBuffer);
+            statsFramesReceived++;
+            printf("Received From External Frame (%i) with payload (%i)\n", receivedFrame[bufferFramesReceived - 1]->frameId, receivedFrame[bufferFramesReceived - 1]->payloadUsed);
 
             //shift buffer
             char *tmpBuffer = new char[DEFAULT_BUFFER_SIZE];
@@ -144,7 +160,7 @@ bool PhysicalLayer::processDownstreamData(int socketId) {
             downBufferUsed -= MAX_FRAME_SIZE;
         }
 
-        for (int i = 0; i < framesReceived; i++) {
+        for (int i = 0; i < bufferFramesReceived; i++) {
             if (receivedFrame[i]->type == Frame_Join && myActivity == PH_Server) {
                 printf("assigning name to PH local: %s\n", receivedFrame[i]->sourceName);
                 for (int x = 0; x < MAX_CONNECTIONS; x++) {
@@ -163,11 +179,11 @@ bool PhysicalLayer::processDownstreamData(int socketId) {
             }
         }
 
-        for (int i = 0; i < framesReceived; i++) {
+        for (int i = 0; i < bufferFramesReceived; i++) {
             delete receivedFrame[i];
             receivedFrame[i] = NULL;
         }
-        framesReceived = 0;
+        bufferFramesReceived = 0;
     }
     return true;
 }
@@ -187,8 +203,9 @@ bool PhysicalLayer::processUpstreamData() {
 
         //process only complete messages
         while (upBufferUsed >= MAX_FRAME_SIZE) {
-            receivedFrame[framesReceived++] = new Frame(upBuffer);
-            printf("Received From Datalink Layer Frame (%i) with payload (%i) and type %i\n", receivedFrame[framesReceived - 1]->frameId, receivedFrame[framesReceived - 1]->payloadUsed, receivedFrame[framesReceived-1]->type);
+            receivedFrame[bufferFramesReceived++] = new Frame(upBuffer);
+            printf("Received From Datalink Layer Frame (%i) with payload (%i) and type %i\n",
+                receivedFrame[bufferFramesReceived - 1]->frameId, receivedFrame[bufferFramesReceived - 1]->payloadUsed, receivedFrame[bufferFramesReceived-1]->type);
 
             //shift buffer
             char *tmpBuffer = new char[DEFAULT_BUFFER_SIZE];
@@ -199,7 +216,7 @@ bool PhysicalLayer::processUpstreamData() {
             upBufferUsed -= MAX_FRAME_SIZE;
         }
 
-        for (int i = 0; i < framesReceived; i++) {
+        for (int i = 0; i < bufferFramesReceived; i++) {
             if (receivedFrame[i]->type == Frame_Stack_Control)
                 processControlFrame(receivedFrame[i]);
             else {
@@ -209,7 +226,9 @@ bool PhysicalLayer::processUpstreamData() {
                             if (strcmp(clientFDs[x]->clientName, receivedFrame[i]->targetName) == 0) {
                                 printf("Forwarding to client %s\n", clientFDs[x]->clientName);
                                 char* serializedFrame = receivedFrame[i]->serialize();
-                                if (!guaranteedSocketWrite(clientFDs[x]->socketFD, serializedFrame, MAX_FRAME_SIZE))
+                                statsBytesSent += MAX_FRAME_SIZE;
+                                statsFramesSent++;
+                                if (!unreliableSend(clientFDs[x]->socketFD, serializedFrame, MAX_FRAME_SIZE))
                                      printf("ERROR writing to socket");
                             }
                     }
@@ -218,22 +237,61 @@ bool PhysicalLayer::processUpstreamData() {
                     if (externalFD != 0) {
                         printf("Forwarding to server\n");
                         char* serializedFrame = receivedFrame[i]->serialize();
-                        if (!guaranteedSocketWrite(externalFD, serializedFrame, MAX_FRAME_SIZE))
+                        statsBytesSent += MAX_FRAME_SIZE;
+                        statsFramesSent++;
+                        if (!unreliableSend(externalFD, serializedFrame, MAX_FRAME_SIZE))
                              printf("ERROR writing to socket");
                     }
                 }
             }
         }
 
-        for (int i = 0; i < framesReceived; i++) {
+        for (int i = 0; i < bufferFramesReceived; i++) {
             delete receivedFrame[i];
             receivedFrame[i] = NULL;
         }
-        framesReceived = 0;
+        bufferFramesReceived = 0;
     }
     return true;
 }
 
+
+bool PhysicalLayer::unreliableSend(int socket, char* stream, int length) {
+    if (frameErrorRate > 0) {
+        int check = rand() % 100;
+        if (check < frameErrorRate) {// drop frame
+            statsFramesDropped++;
+            return true;
+        }
+    }
+
+    if (byteErrorRate > 0) {
+        int check = rand() % 100;
+        if (check < byteErrorRate) {
+            int bytesChanges = rand() % length;
+
+            while (bytesChanges > 0) {
+                //change it so that we have some safety in our delimiters
+                int changedByte = (rand() % (length - 6))+3;
+                int newByte = rand() % 255;
+                //again, same as above
+                if (newByte == FRAME_START_CHAR)
+                    newByte++;
+                else if (newByte == FRAME_END_CHAR)
+                    newByte++;
+                else if (newByte == FRAME_ESCAPE)
+                    newByte++;
+
+                stream[changedByte] = (char)newByte;
+                statsBytesChanged++;
+
+                bytesChanges--;
+            }
+        }
+    }
+
+    return guaranteedSocketWrite(socket, stream, length);
+}
 
 bool PhysicalLayer::processControlFrame(Frame *inFrame) {
     if (inFrame == NULL)
@@ -292,11 +350,20 @@ bool PhysicalLayer::processControlFrame(Frame *inFrame) {
 int main (int argc, char *argv[]) {
     printf("Starting Physical Layer\n");
 
-    PhysicalLayer *myPH = new PhysicalLayer();
+    if (argc < 3) {
+        printf("Usage: PhysicalLayer.exe ByteErrorRate FrameErrorRate [listening port]\nError rates are out of 100\n");
+        return -1;
+    }
+
+    int byteErrorRate = atoi(argv[1]);
+    int frameErrorRate = atoi(argv[2]);
+
+    PhysicalLayer *myPH = new PhysicalLayer(byteErrorRate, frameErrorRate);
     int portUsed = PH_PORT;
 
-    if (argc > 1) {
-        portUsed = atoi(argv[1]);
+
+    if (argc > 3) {
+        portUsed = atoi(argv[3]);
     }
 
     if (!myPH->initialize(portUsed)) {

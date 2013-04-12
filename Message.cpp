@@ -72,7 +72,7 @@ Message* createConnectToServerMessage(char *serverName, int serverPort) {
     memset(msgStr, '\0', 80);
     sprintf(msgStr, "connect %s %i", serverName, serverPort);
 
-    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, "clientA", "server");
+    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, (char*)"clientA", (char*)"server");
 }
 
 Message* createListenForClientsMessage(int serverPort) {
@@ -80,5 +80,5 @@ Message* createListenForClientsMessage(int serverPort) {
     memset(msgStr, '\0', 80);
     sprintf(msgStr, "listen %i", serverPort);
 
-    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, "server", "");
+    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, (char*)"server", (char*)"");
 }

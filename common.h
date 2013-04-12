@@ -14,6 +14,7 @@
 
 #define     FRAME_START_CHAR        1
 #define     FRAME_END_CHAR          23
+#define     FRAME_ESCAPE            20
 #define     DEFAULT_BUFFER_SIZE     1024
 
 #define     EXTERNAL_PORT           2001

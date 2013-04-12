@@ -31,7 +31,7 @@ public:
     /**
      *  Default constructor
      */
-    PhysicalLayer();
+    PhysicalLayer(int newByteErrorRate, int newFrameErrorRate);
 
     /**
      *  Default destructor
@@ -85,17 +85,27 @@ private:
 
     bool processUpstreamData();
     bool processDownstreamData(int socketId);
+    bool unreliableSend(int socket, char* stream, int length);
 
     //char* stuffBits(char* inStream);
 
 
     char *upBuffer;
     int upBufferUsed;
+    int byteErrorRate;
+    int frameErrorRate;
 
     char *downBuffer;
     int downBufferUsed;
     Frame* receivedFrame[100];
-    int framesReceived;
+    int bufferFramesReceived;
+
+    long statsFramesSent;
+    long statsFramesReceived;
+    long statsBytesSent;
+    long statsBytesReceived;
+    long statsFramesDropped;
+    long statsBytesChanged;
 };
 
 #endif

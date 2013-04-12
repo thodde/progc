@@ -13,10 +13,26 @@ DatalinkLayer::DatalinkLayer() {
     downBuffer = new char[DEFAULT_BUFFER_SIZE];
     memset(upBuffer, '\0', DEFAULT_BUFFER_SIZE);
     memset(downBuffer, '\0', DEFAULT_BUFFER_SIZE);
+
+//TODO update these values in the Datalink Layer's body
+    statsFramesSent = 0;
+    statsFramesReceived = 0;
+    statsPacketsReceived = 0;
+    statsPacketsSent = 0;
+    statsBytesSent = 0;
+    statsBytesReceived = 0;
+    statsFrameOverheadSent = 0;
+    statsFrameOverheadReceived = 0;
+    statsErrorFramesDetected = 0;
 };
 
 
 DatalinkLayer::~DatalinkLayer() {
+    printf("Runtime Stats\nSent\tPackets: %li Frames: %li Bytes: %li Overhead Bytes: %li\n", statsPacketsSent,
+        statsFramesSent, statsBytesSent, statsFrameOverheadSent);
+    printf("Received\tPackets: %li Frames: %li Bytes: %li Overhead Bytes: %li\n", statsPacketsReceived,
+        statsFramesReceived, statsBytesReceived, statsFrameOverheadReceived);
+    printf("Errors\tFrames Detected: %li\n", statsErrorFramesDetected);
     if (internalUpFD != 0)
         close(internalUpFD);
     if (internalDownFD != 0)

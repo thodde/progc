@@ -58,6 +58,9 @@ private:
     bool hasFinalPacket();
     PacketNode* extractPacketList();
 
+    long statsMessagesSent, statsBytesSent, statsMessagesReceived, statsBytesReceived, statsPacketsSent, statsPacketsReceived,
+        statsBytesOverheadSent, statsBytesOverheadReceived;
+
 };
 
 

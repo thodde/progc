@@ -8,9 +8,23 @@ NetworkLayer::NetworkLayer() {
     partialBufferUsed = 0;
     globalSentPackets = 0;
     globalReceivedPackets = 0;
+
+    //TODO set these values in the code below
+    statsMessagesSent = 0;
+    statsBytesSent = 0;
+    statsMessagesReceived = 0;
+    statsBytesReceived = 0;
+    statsPacketsSent = 0;
+    statsPacketsReceived = 0;
+    statsBytesOverheadSent = 0;
+    statsBytesOverheadReceived = 0;
 }
 
 NetworkLayer::~NetworkLayer() {
+    printf("Runtime Stats\nSent\tMessages: %li Packets: %li Bytes: %li Overhead Bytes: %li\n", statsMessagesSent,
+        statsPacketsSent, statsBytesSent, statsBytesOverheadSent);
+    printf("Received\tMessage: %li Packets: %li Bytes: %li Overhead Bytes: %li\n", statsMessagesReceived,
+        statsPacketsReceived, statsBytesReceived, statsBytesOverheadReceived);
     if (internalFD != 0)
         close(internalFD);
 }
