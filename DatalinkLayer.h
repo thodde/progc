@@ -83,6 +83,7 @@ private:
 //remove this 'public' later
 public:
     FrameNode *framesReceived;
+    Frame* slidingWindow[MAX_WINDOW_SIZE];
 
     // converts the packet from the Network layer to a consumable Frame by the Physical Layer
     FrameNode* convertPacketsToFrames(Packet* inPacket);
@@ -106,7 +107,6 @@ public:
     long statsErrorFramesDetected;
 
     int numberOfFrames;
-
 
 };
 

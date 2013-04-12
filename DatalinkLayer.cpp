@@ -13,6 +13,7 @@ DatalinkLayer::DatalinkLayer() {
     downBuffer = new char[DEFAULT_BUFFER_SIZE];
     memset(upBuffer, '\0', DEFAULT_BUFFER_SIZE);
     memset(downBuffer, '\0', DEFAULT_BUFFER_SIZE);
+    numberOfFrames = 0;
 
 //TODO update these values in the Datalink Layer's body
     statsFramesSent = 0;
@@ -84,8 +85,7 @@ bool DatalinkLayer::run() {
 bool DatalinkLayer::receiveDataFromNetworkLayer() {
     char generalBuffer[255];
     memset(generalBuffer, '\0', 255);
-    int n = read(internalUpFD, generalBuffer, 255);
-    FrameNode* slidingWindow[MAX_WINDOW_SIZE];  
+    int n = read(internalUpFD, generalBuffer, 255); 
     FrameNode* queuedFrames[10]; //start with 10 and increase later 
     int queueLength = 0; 
 
@@ -119,10 +119,11 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
 
             while (currentFrame != NULL) {
                 //add the current frame to the sliding window
-                //if(numberOfFrames < MAX_WINDOW_SIZE) {
-                //    slidingWindow[numberOfFrames] = currentFrame;
-                //    numberOfFrames++;
-                //}
+                if(numberOfFrames < MAX_WINDOW_SIZE) {
+                    slidingWindow[numberOfFrames] = currentFrame->data;
+                    numberOfFrames++;
+			        printf("The number of frames currently in the sliding window is: %i \n", numberOfFrames);
+                }
                 //else {
                     //create a queue of frames that have not been added to the window yet
                 //    queuedFrames[queueLength] = currentFrame;
@@ -135,11 +136,7 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
                 printf("Forwarding Physical Layer Frame (%i) of with payload of size: %i\n", currentFrame->data->frameId, currentFrame->data->payloadUsed);
 
                 if (!guaranteedSocketWrite(internalDownFD, serializeFrame, MAX_FRAME_SIZE))
-                     printf("ERROR writing to socket");  
-                //else {
-                //    delete slidingWindow[numberOfFrames];
-                //    numberOfFrames--;
-                //}  
+                     printf("ERROR writing to socket");   
 
                 currentFrame = currentFrame->next;   
             }
@@ -178,9 +175,27 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
 
             printf("Received Frame from Physical Layer Frame (%i) with payload (%i) final? (%s)\n", newFrame->frameId, newFrame->payloadUsed, (newFrame->finalFrame ? "yes" : "no"));
             
-            //if an ACK is received, display it for its respective frame
+            //if an ACK is received, display its frame number
             if(newFrame->type == Frame_Ack) {
                 printf("Received acknowledgement for frame (%i)\n", newFrame->frameId);
+		
+		        //check each frame in the window for an id that matches the current ACK
+		        for(int i = 0; i < MAX_WINDOW_SIZE; i++) {
+		            //check if the ACK received was for any of the frames in the sliding window
+		            if(slidingWindow[i] != NULL) {
+		                if(slidingWindow[i]->frameId == newFrame->frameId) {
+				            //decrease the number of frames
+				            numberOfFrames--;
+				            //remove the frame
+				            slidingWindow[i] = NULL;
+
+				            //this loop should move up everything in list to fill in any empty spots
+				            for(int j = i; j < MAX_WINDOW_SIZE; j++) {
+				                slidingWindow[j] = slidingWindow[j-1];
+				            }
+			            }
+		            }
+		        }
                 previousFrameId = -1;
             }
 
