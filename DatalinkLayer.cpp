@@ -110,6 +110,9 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
             upBuffer = tmpBuffer;
             upBufferUsed -= MAX_PACKET_SIZE;
 
+            statsPacketsSent++;
+
+
             printf("Received Packet (%i) of payload (%i) final ?(%s) From Network Layer\n", receivedPackets[packetsReceived - 1]->packetId, receivedPackets[packetsReceived - 1]->payloadUsed, (receivedPackets[packetsReceived - 1]->finalPacket ? "yes" : "no"));
         }
 
@@ -134,6 +137,12 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
                 //printf("=========================================\n");
 
                 printf("Forwarding Physical Layer Frame (%i) of with payload of size: %i\n", currentFrame->data->frameId, currentFrame->data->payloadUsed);
+                statsFramesSent++;
+                statsBytesSent += MAX_FRAME_SIZE;
+                if (currentFrame->data->type == Frame_Data)
+                    statsFrameOverheadSent += (MAX_FRAME_SIZE - MAX_FRAME_PAYLOAD);
+                else
+                    statsFrameOverheadSent += MAX_FRAME_SIZE;
 
                 if (!guaranteedSocketWrite(internalDownFD, serializeFrame, MAX_FRAME_SIZE))
                      printf("ERROR writing to socket");   
@@ -168,11 +177,19 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
         memcpy(downBuffer+downBufferUsed, generalBuffer, n);
         downBufferUsed += n;
         memset(generalBuffer, '\0', MAX_FRAME_SIZE);
+        statsBytesReceived += n;
 
         //process only complete messages
         while (downBufferUsed >= MAX_FRAME_SIZE) {
             Frame *newFrame = new Frame(downBuffer);
+            statsFramesReceived++;
 
+            if (newFrame->type == Frame_Data)
+                statsFrameOverheadReceived += (MAX_FRAME_SIZE - MAX_FRAME_PAYLOAD);
+             else
+                statsFrameOverheadReceived += MAX_FRAME_SIZE;
+
+            //TODO track statsErrorFramesDetected;
             printf("Received Frame from Physical Layer Frame (%i) with payload (%i) final? (%s)\n", newFrame->frameId, newFrame->payloadUsed, (newFrame->finalFrame ? "yes" : "no"));
             
             //if an ACK is received, display its frame number
@@ -226,6 +243,7 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
             FrameNode *frameList = extractFrameList();
             Packet *outPacket = convertFramesToPacket(frameList);
             char* serializedPacket = outPacket->serialize();
+            statsPacketsReceived++;
 
             printf("Forwarding to Network Layer Packet (%i) with payload (%i)\n", outPacket->packetId, outPacket->payloadUsed);
             if (!guaranteedSocketWrite(internalUpFD, serializedPacket, MAX_PACKET_SIZE))

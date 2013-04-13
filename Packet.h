@@ -6,7 +6,7 @@
 #define     MAX_PACKET_SIZE         192
 #define     MAX_PACKET_PAYLOAD      150 //this will need to be lowered due to the packet header
 
-typedef enum { Packet_Join, Packet_Data, Packet_Ack, Packet_Final, Packet_Stack_Control } Packet_Type;
+typedef enum { Packet_Join, Packet_Data, Packet_Stack_Control } Packet_Type;
 
 struct Packet {
     //the packet id will need to be removed later, this should only exist at the DLL layer.

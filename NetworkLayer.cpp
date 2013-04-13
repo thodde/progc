@@ -6,8 +6,6 @@ NetworkLayer::NetworkLayer() {
     partialMessageBuffer = new char[DEFAULT_BUFFER_SIZE];
     memset(partialMessageBuffer, '\0', DEFAULT_BUFFER_SIZE);
     partialBufferUsed = 0;
-    globalSentPackets = 0;
-    globalReceivedPackets = 0;
 
     //TODO set these values in the code below
     statsMessagesSent = 0;
@@ -42,13 +40,13 @@ bool NetworkLayer::initialize(int portInternal) {
     return true;
 }
 
-
 bool NetworkLayer::sendMessage(Message *newMessage) {
     int serializedLength;
     if (internalFD == 0)
         return false;
 
     // break into packets
+    statsMessagesSent++;
     PacketNode *sendList = convertMessageToPackets(newMessage);
 
     if (sendList == NULL) //errors converting message
@@ -56,6 +54,13 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
 
     int bytesWritten = 0;
     while (sendList != NULL) {
+        statsPacketsSent++;
+        statsBytesSent += MAX_PACKET_SIZE;
+
+        if (sendList->data->type == Packet_Data)
+            statsBytesOverheadSent += (MAX_PACKET_SIZE - MAX_PACKET_PAYLOAD);
+        else
+            statsBytesOverheadSent += MAX_PACKET_SIZE;
 
         char *sendStream = sendList->data->serialize();
 
@@ -63,7 +68,6 @@ bool NetworkLayer::sendMessage(Message *newMessage) {
             printf("ERROR writing to socket, entire message not sent or error encountered\n");
 
         bytesWritten += MAX_PACKET_SIZE;
-        globalSentPackets++;
 
         printf("Sending Packet (%i) to Datalink Layer\n", sendList->data->packetId);
 
@@ -147,16 +151,23 @@ Message* NetworkLayer::checkForMessages(bool &hasError) {
             memcpy(partialMessageBuffer+partialBufferUsed, generalBuffer, n);
             partialBufferUsed += n;
             memset(generalBuffer, '\0', MAX_PACKET_SIZE);
+            statsBytesReceived += n;
 
             //process only complete messages
             while (partialBufferUsed >= MAX_PACKET_SIZE) {
-                globalReceivedPackets++;
                 Packet *newPacket = new Packet(partialMessageBuffer);
+                statsPacketsReceived++;
+
                 if (!addPacket(newPacket)) {
                     printf("Error while recreating packet!\n");
                 }
 
                 printf("Received Packet (%i)\n", newPacket->packetId);
+
+                if (newPacket->type == Packet_Data)
+                    statsBytesOverheadReceived += (MAX_PACKET_SIZE - MAX_PACKET_PAYLOAD);
+                else
+                    statsBytesOverheadReceived += MAX_PACKET_SIZE;
 
                 //shift buffer
                 char *tmpBuffer = new char[DEFAULT_BUFFER_SIZE];
@@ -168,6 +179,7 @@ Message* NetworkLayer::checkForMessages(bool &hasError) {
             }
             while (hasFinalPacket()) {
                 printf("Rebuilding Message\n");
+                statsMessagesReceived++;
 
                 PacketNode *packetList = extractPacketList();
                 if (packetList == NULL) {
