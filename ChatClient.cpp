@@ -157,11 +157,6 @@ void ChatClient::show_help() {
         printf("\t- Join - Allow a user to join the chat room. Must specify a user name.\n");
         printf("\t\tExample: \n");
         printf("\t\t\tjoin Trevor\n\n");
-        printf("\tNOTE: Users may also join the chat room as an administrator if one does not already\n");
-        printf("\texist to gain administrative privileges. To join as an administrator, a user must specify\n");
-        printf("\tthe -op flag with the join command.\n");
-        printf("\t\tExample: \n");
-        printf("\t\t\tjoin -op Trevor\n\n");
 
         printf("\t- Kick - Forcibly remove a user from the chat room by specifying their username.\n");
         printf("\t\tExample: \n");
