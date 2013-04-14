@@ -15,7 +15,6 @@ DatalinkLayer::DatalinkLayer() {
     memset(downBuffer, '\0', DEFAULT_BUFFER_SIZE);
     numberOfFrames = 0;
 
-//TODO update these values in the Datalink Layer's body
     statsFramesSent = 0;
     statsFramesReceived = 0;
     statsPacketsReceived = 0;
@@ -25,6 +24,10 @@ DatalinkLayer::DatalinkLayer() {
     statsFrameOverheadSent = 0;
     statsFrameOverheadReceived = 0;
     statsErrorFramesDetected = 0;
+
+    for (int i = 0; i < MAX_ENDPOINT_CONNECTIONS; i++) {
+        myWindows[i] = NULL;
+    }
 };
 
 
@@ -38,6 +41,13 @@ DatalinkLayer::~DatalinkLayer() {
         close(internalUpFD);
     if (internalDownFD != 0)
         close(internalDownFD);
+
+    for (int i = 0; i < MAX_ENDPOINT_CONNECTIONS; i++) {
+        if(myWindows[i] != NULL) {
+            delete myWindows[i];
+            myWindows[i] = NULL;
+        }
+    }
 }
 
 bool DatalinkLayer::initialize(int portInternalUp, int portInternalDown) {
@@ -65,8 +75,6 @@ bool DatalinkLayer::run() {
     //begin main execution loop
     upBufferUsed = 0;
     downBufferUsed = 0;
-    packetsReceived = 0;
-    framesReceived = NULL;
 
     while (internalUpFD != 0 && internalDownFD != 0) {
         if  (checkSocketHasData(internalUpFD)) {
@@ -79,6 +87,25 @@ bool DatalinkLayer::run() {
 
     }
     return true;
+}
+
+SlidingWindow* DatalinkLayer::getSlidingWindow(char* clientName) {
+    for (int i = 0; i < MAX_ENDPOINT_CONNECTIONS; i++) {
+        if (myWindows[i] != NULL) {
+            if (strcmp(myWindows[i]->clientName, clientName) == 0)
+                return myWindows[i];
+        }
+    }
+
+    //Not found, create a new sliding window for this guy
+    for (int i = 0; i < MAX_ENDPOINT_CONNECTIONS; i++) {
+        if (myWindows[i] == NULL) {
+            myWindows[i] = new SlidingWindow(clientName);
+            return myWindows[i];
+        }
+    }
+
+    return NULL; //client doesn't have a sliding window entry...error!
 }
 
 
@@ -101,8 +128,10 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
 
         //process only complete messages
         while (upBufferUsed >= MAX_PACKET_SIZE) {
-            receivedPackets[packetsReceived++] = new Packet(upBuffer);
+            Packet *newPacket = new Packet(upBuffer);
+            statsPacketsSent++;
 
+            //used because of issues with memmove
             char *tmpBuffer = new char[DEFAULT_BUFFER_SIZE];
             memset(tmpBuffer, '\0', DEFAULT_BUFFER_SIZE);
             memcpy(tmpBuffer, upBuffer + MAX_PACKET_SIZE, (DEFAULT_BUFFER_SIZE-MAX_PACKET_SIZE));
@@ -110,55 +139,64 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
             upBuffer = tmpBuffer;
             upBufferUsed -= MAX_PACKET_SIZE;
 
-            statsPacketsSent++;
+            printf("Received Packet (%i) of payload (%i) final ?(%s) From Network Layer\n", newPacket->packetId, newPacket->payloadUsed, (newPacket->finalPacket ? "yes" : "no"));
 
+            FrameNode *currentFrame = convertPacketsToFrames(newPacket);
+            SlidingWindow *windowCursor = getSlidingWindow(newPacket->targetName);
 
-            printf("Received Packet (%i) of payload (%i) final ?(%s) From Network Layer\n", receivedPackets[packetsReceived - 1]->packetId, receivedPackets[packetsReceived - 1]->payloadUsed, (receivedPackets[packetsReceived - 1]->finalPacket ? "yes" : "no"));
-        }
-
-        for (int i = 0; i < packetsReceived; i++) {
-            //process message by dividing frames to packets
-            FrameNode* currentFrame = convertPacketsToFrames(receivedPackets[i]);
-
-            while (currentFrame != NULL) {
-                //add the current frame to the sliding window
-                if(numberOfFrames < MAX_WINDOW_SIZE) {
-                    slidingWindow[numberOfFrames] = currentFrame->data;
-                    numberOfFrames++;
-			        printf("The number of frames currently in the sliding window is: %i \n", numberOfFrames);
+            if (windowCursor == NULL) {
+                printf("Error!!!  Sliding window buffer exceeded!\n");
+            }
+            else {
+                while (currentFrame != NULL) {
+                    windowCursor->addFrameToSend(currentFrame->data);
+                    currentFrame = currentFrame->next;
                 }
-                //else {
-                    //create a queue of frames that have not been added to the window yet
-                //    queuedFrames[queueLength] = currentFrame;
-                //    queueLength++;
-                //}
+            }
+        }
+        return sendAllAvailableFrames();
+    }
+}
 
-                char* serializeFrame = currentFrame->data->serialize();
-                //printf("=========================================\n");
-
-                printf("Forwarding Physical Layer Frame (%i) of with payload of size: %i\n", currentFrame->data->frameId, currentFrame->data->payloadUsed);
+bool DatalinkLayer::sendAllAvailableFrames() {
+    for (int i = 0; i < MAX_ENDPOINT_CONNECTIONS; i++) {
+        if (myWindows[i] != NULL) {
+            Frame *outFrame = myWindows[i]->getFrameToSend();
+            while (outFrame != NULL) {
+                char* serializeFrame = outFrame->serialize();
+                printf("Forwarding Physical Layer Frame (%i) of with payload of size: %i\n", outFrame->frameId, outFrame->payloadUsed);
                 statsFramesSent++;
                 statsBytesSent += MAX_FRAME_SIZE;
-                if (currentFrame->data->type == Frame_Data)
+                if (outFrame->type == Frame_Data)
                     statsFrameOverheadSent += (MAX_FRAME_SIZE - MAX_FRAME_PAYLOAD);
                 else
                     statsFrameOverheadSent += MAX_FRAME_SIZE;
 
                 if (!guaranteedSocketWrite(internalDownFD, serializeFrame, MAX_FRAME_SIZE))
-                     printf("ERROR writing to socket");   
+                     printf("ERROR writing to socket");
 
-                currentFrame = currentFrame->next;   
+                outFrame = myWindows[i]->getFrameToSend();
             }
-
-    //TODO MEMORY LEAKS!!!
-            //delete serializedPacket;
         }
+    }
+    return true;
+}
 
-        for (int i = 0; i < packetsReceived; i++) {
-            //delete receivedPackets[i];
-            receivedPackets[i] = NULL;
+bool DatalinkLayer::receiveAllAvailablePackets() {
+    for (int i = 0; i < MAX_ENDPOINT_CONNECTIONS; i++) {
+        if (myWindows[i] != NULL) {
+            Packet *outPacket = myWindows[i]->getPacketToReceive();
+            while (outPacket != NULL) {
+                char* serializedPacket = outPacket->serialize();
+                printf("Forwarding to Network Layer Packet (%i) with payload (%i)\n", outPacket->packetId, outPacket->payloadUsed);
+                statsPacketsReceived++;
+
+                if (!guaranteedSocketWrite(internalUpFD, serializedPacket, MAX_PACKET_SIZE))
+                     printf("ERROR writing to socket");
+
+                 outPacket = myWindows[i]->getPacketToReceive();
+            }
         }
-        packetsReceived = 0;
     }
 }
 
@@ -191,43 +229,14 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
 
             //TODO track statsErrorFramesDetected;
             printf("Received Frame from Physical Layer Frame (%i) with payload (%i) final? (%s)\n", newFrame->frameId, newFrame->payloadUsed, (newFrame->finalFrame ? "yes" : "no"));
-            
+
             //if an ACK is received, display its frame number
             if(newFrame->type == Frame_Ack) {
                 printf("Received acknowledgement for frame (%i)\n", newFrame->frameId);
-		
-		        //check each frame in the window for an id that matches the current ACK
-		        for(int i = 0; i < MAX_WINDOW_SIZE; i++) {
-		            //check if the ACK received was for any of the frames in the sliding window
-		            if(slidingWindow[i] != NULL) {
-		                if(slidingWindow[i]->frameId == newFrame->frameId) {
-				            //decrease the number of frames
-				            numberOfFrames--;
-				            //remove the frame
-				            slidingWindow[i] = NULL;
-
-				            //this loop should move up everything in list to fill in any empty spots
-				            for(int j = i; j < MAX_WINDOW_SIZE; j++) {
-				                slidingWindow[j] = slidingWindow[j-1];
-				            }
-			            }
-		            }
-		        }
-                previousFrameId = -1;
             }
 
-            //if the current frame is not an ACK, add it to the list and send a new ACK for this frame
-            if(newFrame->type != Frame_Ack) {
-                addFrameReceived(newFrame);
-                //make sure to send an ack frame back to the sender once a frame is received
-                Frame* ackFrame = new Frame(newFrame->frameId, true, Frame_Ack, newFrame->targetName, newFrame->sourceName);
-                char* serializedAckFrame = ackFrame->serialize();
-
-                if (!guaranteedSocketWrite(internalDownFD, serializedAckFrame, MAX_FRAME_SIZE))
-                         printf("ERROR writing to socket"); 
-                printf("Sending ack for frame (%i).\n", newFrame->frameId);
-                previousFrameId = newFrame->frameId;
-            }
+            SlidingWindow *localWindow = getSlidingWindow(newFrame->sourceName);
+            localWindow->addFrameToReceive(newFrame);
 
             //shift buffer
             char *tmpBuffer = new char[DEFAULT_BUFFER_SIZE];
@@ -238,17 +247,8 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
             downBufferUsed -= MAX_FRAME_SIZE;
         }
 
-        //TODO this should change to whatever receiving intelligence we use
-        while (hasFinalFrame()) {
-            FrameNode *frameList = extractFrameList();
-            Packet *outPacket = convertFramesToPacket(frameList);
-            char* serializedPacket = outPacket->serialize();
-            statsPacketsReceived++;
-
-            printf("Forwarding to Network Layer Packet (%i) with payload (%i)\n", outPacket->packetId, outPacket->payloadUsed);
-            if (!guaranteedSocketWrite(internalUpFD, serializedPacket, MAX_PACKET_SIZE))
-                 printf("ERROR writing to socket");
-        }
+        receiveAllAvailablePackets();
+        sendAllAvailableFrames();
     }
     return true;
 }
@@ -349,64 +349,6 @@ Packet* DatalinkLayer::convertFramesToPacket(FrameNode *headptr) {
     return new Packet(packetStream);
 }
 
-bool DatalinkLayer::hasFinalFrame() {
-    if (framesReceived == NULL)
-        return false;
-
-    FrameNode *cursor = framesReceived;
-
-    while (cursor != NULL) {
-        if (cursor->data->finalFrame)
-            return true;
-
-        cursor = cursor->next;
-    }
-
-    return false;
-}
-
-bool DatalinkLayer::addFrameReceived(Frame *inFrame) {
-    if (framesReceived == NULL) {
-        framesReceived = new FrameNode();
-        framesReceived->next = NULL;
-        framesReceived->data = inFrame;
-        return true;
-    }
-
-    FrameNode *cursor = framesReceived;
-
-    while(cursor->next != NULL) {
-        cursor = cursor->next;
-    }
-
-    cursor->next = new FrameNode();
-    cursor = cursor->next;
-    cursor->next = NULL;
-    cursor->data = inFrame;
-    return true;
-}
-
-FrameNode* DatalinkLayer::extractFrameList() {
-    if (framesReceived == NULL) {
-	return NULL;
-    }
-
-    FrameNode *frameList = framesReceived;
-    FrameNode *cursor = framesReceived;
-
-    while (cursor != NULL) {
-        if (cursor->data->finalFrame) {
-            //break the list here
-            framesReceived = cursor->next;
-            cursor->next = NULL;
-            return frameList;
-        }
-        cursor = cursor->next;
-    }
-
-    //no final packet found
-    return NULL;
-}
 
 int main (int argc, char *argv[]) {
     int dllPort = DLL_PORT;

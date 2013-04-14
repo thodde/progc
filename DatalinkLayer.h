@@ -15,7 +15,8 @@
 #include "Packet.h"
 #include "SlidingWindow.h"
 
-#define MAX_WINDOW_SIZE 4
+
+#define MAX_ENDPOINT_CONNECTIONS        10
 
 
 //IP address of next hop, plus info for next level up
@@ -81,18 +82,24 @@ private:
     
     unsigned int curFrameId;
 
+    /**
+     *  Reviews all available sliding windows and sends to the physical layer where appropriate
+     */
+    bool sendAllAvailableFrames();
+    bool receiveAllAvailablePackets();
+
+    SlidingWindow* myWindows[MAX_ENDPOINT_CONNECTIONS];
+    SlidingWindow* getSlidingWindow(char* clientName);
+
 //remove this 'public' later
 public:
-    FrameNode *framesReceived;
-    Frame* slidingWindow[MAX_WINDOW_SIZE];
+    //FrameNode *framesReceived;
+    //Frame* slidingWindow[MAX_WINDOW_SIZE];
 
     // converts the packet from the Network layer to a consumable Frame by the Physical Layer
     FrameNode* convertPacketsToFrames(Packet* inPacket);
     FrameNode* convertControlPacketToFrame(Packet *inPacket);
 
-    bool addFrameReceived(Frame *inFrame);
-    bool hasFinalFrame();
-    FrameNode* extractFrameList();
     Packet* convertFramesToPacket(FrameNode *headptr);
     Packet* convertFrameJoinToPacket(FrameNode *headptr);
     bool receiveDataFromPhysicalLayer();
@@ -100,8 +107,8 @@ public:
 
     int upBufferUsed;
     int downBufferUsed;
-    Packet* receivedPackets[100];
-    int packetsReceived;
+    //Packet* receivedPackets[100];
+    //int packetsReceived;
 
     long statsFramesSent, statsFramesReceived, statsPacketsReceived, statsPacketsSent, statsBytesSent, statsBytesReceived;
     long statsFrameOverheadSent, statsFrameOverheadReceived;

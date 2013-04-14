@@ -25,6 +25,13 @@ char* Frame::serialize() {
     memset(outFrame, '\0', MAX_FRAME_SIZE);
     char* frameCursor = outFrame;
 
+    /*
+    char startChar = FRAME_START_CHAR;
+    char endChar = FRAME_END_CHAR;
+    char delimChar = FRAME_ESCAPE;
+    memcpy(frameCursor, )
+    */
+
     memcpy(frameCursor, &frameId, sizeof(frameId));
     frameCursor += sizeof(frameId);
     memcpy(frameCursor, &type, sizeof(type));
