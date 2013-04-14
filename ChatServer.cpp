@@ -66,7 +66,44 @@ bool ChatServer::add_user(char* user_name) {
 }
 
 bool ChatServer::remove_user(char* user_name) {
+    if(user_name == NULL) 
+        return false;
 
+    //in case the list is empty
+    if(user_list == NULL)
+        return false;
+
+    //in case the name is the first item in the list
+    if(strcasecmp(user_name, head_ptr->username) == 0) {
+        head_ptr->username = NULL;
+        head_ptr->next = NULL;        
+        return true;
+    }
+
+    MemberNode* tmp = head_ptr;
+    MemberNode* previous = head_ptr;
+
+    //in case the name is somewhere in the middle of the list
+    while(tmp->next != NULL) {
+        if(strcasecmp(user_name, tmp->next->username) == 0) {
+            tmp->next = tmp->next->next;
+            delete previous->next;
+            return true;
+        }
+
+        tmp = tmp->next;
+
+        //in case the name is the last item in the list
+        if((tmp->next == NULL) && (strcasecmp(user_name, tmp->next->username) == 0)) {
+            delete tmp;
+            previous->next = NULL;
+            return true;
+        }
+
+        previous = previous->next;
+    }
+    
+    return true;
 }
 
 void ChatServer::receive_message(Message* m) {
