@@ -1,6 +1,7 @@
 
 
 #include <stdio.h>
+#include <time.h>
 #include "common.h"
 #include "Message.h"
 #include "NetworkLayer.h"
@@ -40,6 +41,13 @@ int main (int argc, char *argv[]) {
     //myNL->sendMessage(testMsg);
 
     Message *response = NULL;
+    char serverName[25];
+    memset(serverName, '\0', 25);
+    strcpy(serverName, "server");
+    char clientName[25];
+    memset(clientName, '\0', 25);
+    strcpy(clientName, "clientA");
+
 
     //printf("Waiting for response\n");
     bool hasError = false;
@@ -69,9 +77,9 @@ int main (int argc, char *argv[]) {
             printf("\n");
             if (input[0] == 'r') {
                 if (isServer)
-                    testMsg = new Message(Message_Speak, testChar, strlen(testChar), messagesSent++, (char*)"server", (char*)"clientA");
+                    testMsg = new Message(Message_Speak, testChar, strlen(testChar), messagesSent++, serverName, clientName);
                 else
-                    testMsg = new Message(Message_Speak, testChar, strlen(testChar), messagesSent++, (char*)"clientA", (char*)"server");
+                    testMsg = new Message(Message_Speak, testChar, strlen(testChar), messagesSent++, clientName, serverName);
                 myNL->sendMessage(testMsg);
                 waitingForResponse = false;
                 printf("\nSending\n");
@@ -80,7 +88,7 @@ int main (int argc, char *argv[]) {
                 done = true;
             else if (input[0] == 'c') {
                 if(!sentJoinMessage) {
-                    testMsg = createConnectToServerMessage((char*)"localhost", 2666);
+                    testMsg = createConnectToServerMessage(serverName, clientName, 2666);
                     isServer = false;
                     myNL->sendMessage(testMsg);
                     printf("\nSent connect message\n");

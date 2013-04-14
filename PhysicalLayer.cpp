@@ -261,6 +261,7 @@ bool PhysicalLayer::unreliableSend(int socket, char* stream, int length) {
         int check = rand() % 100;
         if (check < frameErrorRate) {// drop frame
             statsFramesDropped++;
+            printf("Shhh....Dropping frame\n");
             return true;
         }
     }
@@ -335,7 +336,7 @@ bool PhysicalLayer::processControlFrame(Frame *inFrame) {
         }
         myActivity = PH_Client;
 
-        Frame *joinFrame = new Frame(0, true, Frame_Join, inFrame->sourceName, (char*)"server", true);
+        Frame *joinFrame = new Frame(inFrame->frameId, true, Frame_Join, inFrame->sourceName, (char*)"server", true);
         joinFrame->setPayload(inFrame->sourceName, 10);
         char *serialized = joinFrame->serialize();
         if (!guaranteedSocketWrite(externalFD, serialized, MAX_FRAME_SIZE)) {

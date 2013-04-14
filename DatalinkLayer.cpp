@@ -13,7 +13,8 @@ DatalinkLayer::DatalinkLayer() {
     downBuffer = new char[DEFAULT_BUFFER_SIZE];
     memset(upBuffer, '\0', DEFAULT_BUFFER_SIZE);
     memset(downBuffer, '\0', DEFAULT_BUFFER_SIZE);
-    numberOfFrames = 0;
+    curFrameId = 1;
+ //   numberOfFrames = 0;
 
     statsFramesSent = 0;
     statsFramesReceived = 0;
@@ -142,15 +143,36 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
             printf("Received Packet (%i) of payload (%i) final ?(%s) From Network Layer\n", newPacket->packetId, newPacket->payloadUsed, (newPacket->finalPacket ? "yes" : "no"));
 
             FrameNode *currentFrame = convertPacketsToFrames(newPacket);
-            SlidingWindow *windowCursor = getSlidingWindow(newPacket->targetName);
 
-            if (windowCursor == NULL) {
-                printf("Error!!!  Sliding window buffer exceeded!\n");
+            if (currentFrame->data->type == Frame_Stack_Control) {
+                //bypass the sliding window, this is just going to control the physical layer
+                while (currentFrame != NULL) {
+                    char* serializeFrame = currentFrame->data->serialize();
+                    printf("Forwarding Physical Layer Control Frame (%i) of with payload of size: %i\n", currentFrame->data->frameId, currentFrame->data->payloadUsed);
+                    statsFramesSent++;
+                    statsBytesSent += MAX_FRAME_SIZE;
+                    statsFrameOverheadSent += MAX_FRAME_SIZE;
+
+                    if (!guaranteedSocketWrite(internalDownFD, serializeFrame, MAX_FRAME_SIZE))
+                         printf("ERROR writing to socket");
+                    FrameNode *tmp = currentFrame;
+                    delete tmp->data;
+                    delete tmp;
+                    currentFrame = currentFrame->next;
+                }
             }
             else {
-                while (currentFrame != NULL) {
-                    windowCursor->addFrameToSend(currentFrame->data);
-                    currentFrame = currentFrame->next;
+                SlidingWindow *windowCursor = getSlidingWindow(newPacket->targetName);
+
+                if (windowCursor == NULL) {
+                    printf("Error!!!  Sliding window buffer exceeded!\n");
+                }
+                else {
+                    while (currentFrame != NULL) {
+
+                        windowCursor->addFrameToSend(currentFrame->data);
+                        currentFrame = currentFrame->next;
+                    }
                 }
             }
         }
@@ -186,10 +208,10 @@ bool DatalinkLayer::receiveAllAvailablePackets() {
     for (int i = 0; i < MAX_ENDPOINT_CONNECTIONS; i++) {
         if (myWindows[i] != NULL) {
             FrameNode *frameList = myWindows[i]->getFullPacketToReceive();
-            if (frameList != NULL) {
+            while (frameList != NULL) {
                 Packet *outPacket = convertFramesToPacket(frameList);
 
-                while (outPacket != NULL) {
+                if (outPacket != NULL) {
                     char* serializedPacket = outPacket->serialize();
                     printf("Forwarding to Network Layer Packet (%i) with payload (%i)\n", outPacket->packetId, outPacket->payloadUsed);
                     statsPacketsReceived++;
@@ -197,6 +219,7 @@ bool DatalinkLayer::receiveAllAvailablePackets() {
                     if (!guaranteedSocketWrite(internalUpFD, serializedPacket, MAX_PACKET_SIZE))
                          printf("ERROR writing to socket");
                 }
+                frameList = myWindows[i]->getFullPacketToReceive();
             }
         }
     }
@@ -238,6 +261,7 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
                 printf("Received acknowledgement for frame (%i)\n", newFrame->frameId);
             }
 
+
             SlidingWindow *localWindow = getSlidingWindow(newFrame->sourceName);
             localWindow->addFrameToReceive(newFrame);
 
@@ -248,6 +272,7 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
             delete downBuffer;
             downBuffer = tmpBuffer;
             downBufferUsed -= MAX_FRAME_SIZE;
+
         }
 
         receiveAllAvailablePackets();

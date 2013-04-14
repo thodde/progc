@@ -2,12 +2,13 @@
 #include "SlidingWindow.h"
 
 SlidingWindow::SlidingWindow(char *newClientName) {
+    memset(clientName, '\0', 80);
     strcpy(clientName, newClientName);
     overflowHead = NULL;
     for (int i = 0; i < MAX_WINDOW_SIZE; i++) {
         myWindow[i] = NULL;
     }
-
+    lastFrameIdReceived = 0;
 }
 
 SlidingWindow::~SlidingWindow() {
@@ -70,6 +71,7 @@ bool SlidingWindow::addFrameToReceive(Frame *inFrame) {
                     delete myWindow[i];
                     delete inFrame;
                     myWindow[i] = NULL;
+                    orderFramesById();
                     return true;
                 }
             }
@@ -93,6 +95,11 @@ bool SlidingWindow::addFrameToReceive(Frame *inFrame) {
         ackEntry->timeout = 0;
         ackEntry->next = NULL;
         addFrameWindowEntryToBuffer(ackEntry);
+
+        if (lastFrameIdReceived != 0 && lastFrameIdReceived >= newEntry->data->frameId) {
+            printf("dropping packet, Id already encountered and sent to network layer\n");
+            return true;
+        }
 
         //also, have I already received this Frame?
         bool currentlySending = false;
@@ -123,7 +130,7 @@ bool SlidingWindow::addFrameToReceive(Frame *inFrame) {
 }
 
 Frame* SlidingWindow::getFrameToSend() {
-    clock_t currentTime = clock() + FRAME_TIMEOUT_IN_MS;
+    time_t currentTime = time(NULL) + FRAME_TIMEOUT_IN_MS;
     bool hasFramesInWindow = false;
 
     for (int i = 0; i < MAX_WINDOW_SIZE; i++) {
@@ -132,7 +139,7 @@ Frame* SlidingWindow::getFrameToSend() {
             if (myWindow[i]->timeout < currentTime && myWindow[i]->transType == FN_ToSend) {
                 if (myWindow[i]->timeout != 0)
                     printf("Frame %i timed out!\n", myWindow[i]->data->frameId);
-                myWindow[i]->timeout = clock() + FRAME_TIMEOUT_IN_MS;
+                myWindow[i]->timeout = time(NULL) + FRAME_TIMEOUT_IN_MS;
                 return myWindow[i]->data;
             }
         }
@@ -173,13 +180,34 @@ Frame* SlidingWindow::getFrameToSend() {
 bool SlidingWindow::moveFramesIntoWindow() {
     bool movedDownFrames = false;
     TransmissionType curType = FN_Unknown;
+    int lastUsed = -1;
 
-    for (int i = 0; i < MAX_WINDOW_SIZE; i++) {
+    for (int y = 0; y < MAX_WINDOW_SIZE; y++) {
+        for (int x = 1; x < MAX_WINDOW_SIZE; x++) {
+            if (myWindow[x-1] == NULL && myWindow[x] != NULL) {
+                myWindow[x-1] = myWindow[x];
+                myWindow[x] = NULL;
+            }
+        }
+    }
+    printf("Shuffled down all necessary frames, current ordering\n");
+    for (int y = 0; y < MAX_WINDOW_SIZE; y++) {
+        if (myWindow[y] != NULL) {
+            printf("(%i)", myWindow[y]->data->frameId);
+            lastUsed = y;
+        }
+    }
+    printf("\n");
+
+
+    for (int i = lastUsed + 1; i < MAX_WINDOW_SIZE; i++) {
         FrameWindowEntry *cursor = overflowHead;
         FrameWindowEntry *prevCursor = NULL;
 
         while(cursor != NULL) {
-            if (cursor->transType == curType || curType == FN_Unknown) {
+            //printf(" cursor trans: %i, matching to type: %i, frame type: %i\n", cursor->transType, curType, cursor->data->type);
+            if ((cursor->transType == curType || curType == FN_Unknown) && cursor->data->type != Frame_Ack) {
+                printf("Moving frame from buffer into window\n");
                 movedDownFrames = true;
                 curType = cursor->transType;
                 myWindow[i] = cursor;
@@ -192,44 +220,117 @@ bool SlidingWindow::moveFramesIntoWindow() {
 
                 break;
             }
-            prevCursor->next = cursor->next;
+            prevCursor = cursor;
             cursor = cursor->next;
         }
     }
+    printf("filled in frames frame buffer\n");
 
     return movedDownFrames;
 }
 
 void SlidingWindow::orderFramesById() {
-    int frameId = 0;
-    for (int x = 0; x < MAX_WINDOW_SIZE; x++) {
+    int maxFrameId = 0;
+    int usedFrames = 0;
+    int highestWindowUsed = -1;
+
+    bool inOrder = false;
+    printf("List before\n");
+    for (int i = 0; i < MAX_WINDOW_SIZE; i++) {
+        if (myWindow[i] != NULL)  {
+            printf("(%i)", myWindow[i]->data->frameId);
+            usedFrames++;
+        }
+    }
+    printf("\n");
+    if (usedFrames < MAX_WINDOW_SIZE) {
+        printf("Buffer not full, moving frames into window\n");
+        moveFramesIntoWindow();
+    }
+
+
+
+    printf("\nRunning reordering list\n");
+    while (!inOrder) {
+        inOrder = true;
+
         for (int i = 0; i < MAX_WINDOW_SIZE; i++) {
             if (myWindow[i] != NULL) {
-                if (frameId = 0)
-                    frameId = myWindow[i]->data->frameId;
-                else if (i > 0) {
-                    if (frameId > (myWindow[i]->data->frameId)) {
+                highestWindowUsed = i;
+                if (myWindow[i]->transType == FN_ToSend) {
+                    printf("Send list, doesn't reorder, breaking out\n");
+                    return;
+                }
+                //if (frameId = 0)
+                //    frameId = myWindow[i]->data->frameId;
+
+                if (i > 0) {
+                    if (myWindow[i-1]->data->frameId > (myWindow[i]->data->frameId)) {
+                        printf("Frames out of order, swapping %i with %i\n", myWindow[i-1]->data->frameId, myWindow[i]->data->frameId);
                         FrameWindowEntry *tmp = myWindow[i-1];
                         myWindow[i-1] = myWindow[i];
                         myWindow[i] = tmp;
-                        frameId = myWindow[i]->data->frameId;
+                        //frameId = myWindow[i]->data->frameId;
+                        inOrder = false;
                     }
-                    else
-                        frameId = myWindow[i]->data->frameId;
+                    //else
+                    //    frameId = myWindow[i]->data->frameId;
                 }
+                if (myWindow[i]->data->frameId > maxFrameId)
+                    maxFrameId = myWindow[i]->data->frameId;
             }
         }
+    }
+    printf("Done reordering\n");
+    for (int i = 0; i < MAX_WINDOW_SIZE; i++) {
+        if (myWindow[i] != NULL)
+            printf("(%i)", myWindow[i]->data->frameId);
+    }
+    printf("\n");
+    FrameWindowEntry *prevCursor = NULL;
+    FrameWindowEntry *cursor = overflowHead;
+    inOrder = true;
+
+    if (highestWindowUsed == -1)
+        return;
+
+    while (cursor != NULL) {
+        if (cursor->transType == FN_ToReceive) {
+            if (maxFrameId > cursor->data->frameId) {
+                FrameWindowEntry *tmp = myWindow[highestWindowUsed];
+                myWindow[highestWindowUsed] = cursor;
+                cursor = tmp;
+                cursor->next = myWindow[highestWindowUsed]->next;
+                myWindow[highestWindowUsed]->next = NULL;
+
+                if (prevCursor == NULL)
+                    overflowHead->next = cursor;
+                else
+                    prevCursor->next = cursor;
+                return orderFramesById();
+            }
+        }
+        prevCursor = cursor;
+        cursor = cursor->next;
     }
 }
 
 FrameNode* SlidingWindow::getFullPacketToReceive() {
     bool foundFirstFrame = false;
-    bool foundLastFrame = true;
+    bool foundLastFrame = false;
     bool completeFrame = true;
-    bool expectedFrameId = 0;
+
+    int expectedFrameId;
+    if (lastFrameIdReceived == 0)
+        expectedFrameId = 0;
+    else
+        expectedFrameId = lastFrameIdReceived + 1;
     orderFramesById();
+
+    printf("Frame ordering: ");
     for (int i = 0; i < MAX_WINDOW_SIZE; i++) {
         if (myWindow[i] != NULL) {
+            printf("(%i-", myWindow[i]->data->frameId);
             if (myWindow[i]->transType == FN_ToReceive) {
                 if (myWindow[i]->data->isFirstFrame || myWindow[i]->data->finalFrame) {
                     if (myWindow[i]->data->isFirstFrame)
@@ -238,8 +339,10 @@ FrameNode* SlidingWindow::getFullPacketToReceive() {
                         foundLastFrame = true;
 
                     if (expectedFrameId != 0)
-                        if (myWindow[i]->data->frameId != expectedFrameId) //final found and is not the expected id
+                        if (myWindow[i]->data->frameId != expectedFrameId) { //final found and is not the expected id
+                            //printf(" (received %i expected %i) ", myWindow[i]->data->frameId, expectedFrameId);
                             completeFrame = false;
+                        }
 
                     expectedFrameId = myWindow[i]->data->frameId + 1;
                 }
@@ -252,10 +355,15 @@ FrameNode* SlidingWindow::getFullPacketToReceive() {
                 else
                     completeFrame = false;
             }
+            printf("%s-%s-%s)", (foundFirstFrame ? "T" : "F") , (foundLastFrame ? "T" : "F") , (completeFrame ? "T" : "F"));
         }
+        if(foundFirstFrame && foundLastFrame && completeFrame)
+            break;
     }
+    printf("\n");
 
     if (foundFirstFrame && foundLastFrame && completeFrame) {
+        printf("Found frame list to send\n");
         FrameNode *headptr = NULL;
         FrameNode *cursor = NULL;
 
@@ -266,6 +374,7 @@ FrameNode* SlidingWindow::getFullPacketToReceive() {
                         headptr = new FrameNode();
                         headptr->next = NULL;
                         headptr->data = myWindow[i]->data;
+                        myWindow[i]->data = NULL;
                         delete myWindow[i];
                         myWindow[i] = NULL;
                         cursor = headptr;
@@ -275,9 +384,13 @@ FrameNode* SlidingWindow::getFullPacketToReceive() {
                         cursor = cursor->next;
                         cursor->next = NULL;
                         cursor->data = myWindow[i]->data;
+                        myWindow[i]->data = NULL;
                         delete myWindow[i];
                         myWindow[i] = NULL;
                     }
+                    lastFrameIdReceived = cursor->data->frameId;
+                    //moveFramesIntoWindow();
+
                     return headptr;
                 }
                 else {
@@ -285,6 +398,7 @@ FrameNode* SlidingWindow::getFullPacketToReceive() {
                         headptr = new FrameNode();
                         headptr->next = NULL;
                         headptr->data = myWindow[i]->data;
+                        myWindow[i]->data = NULL;
                         delete myWindow[i];
                         myWindow[i] = NULL;
                         cursor = headptr;
@@ -294,6 +408,7 @@ FrameNode* SlidingWindow::getFullPacketToReceive() {
                         cursor = cursor->next;
                         cursor->next = NULL;
                         cursor->data = myWindow[i]->data;
+                        myWindow[i]->data = NULL;
                         delete myWindow[i];
                         myWindow[i] = NULL;
                     }

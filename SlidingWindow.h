@@ -19,7 +19,7 @@ struct FrameWindowEntry {
     Frame *data;
     bool isAcked;
     TransmissionType transType;
-    clock_t timeout;
+    time_t timeout;
     FrameWindowEntry *next;    //!< Used only by the buffer overflow
 };
 
@@ -32,7 +32,7 @@ public:
     SlidingWindow(char *newClientName);
     ~SlidingWindow();
 
-    char *clientName;
+    char clientName[80];
 
     /**
      *  Adds a frame to the window and sets its type to "To Be Sent".  Also used for the returning ACK messages.  Writes to the
@@ -64,6 +64,7 @@ private:
     FrameWindowEntry* overflowHead;
 
     void orderFramesById();
+    unsigned int lastFrameIdReceived;
 
     /**
      *  Returns true if there were frames to move into window.  False otherwise

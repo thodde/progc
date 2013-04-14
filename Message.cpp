@@ -67,18 +67,25 @@ bool Message::deSerialize(char *stream) {
 }
 
 
-Message* createConnectToServerMessage(char *serverName, int serverPort) {
+Message* createConnectToServerMessage(char *serverAddress, char *clientName, int serverPort) {
     char msgStr[80];
     memset(msgStr, '\0', 80);
-    sprintf(msgStr, "connect %s %i", serverName, serverPort);
+    sprintf(msgStr, "connect %s %i as client name: %s", serverAddress, serverPort, clientName);
+    char serverName[25];
+    memset(serverName, '\0', 25);
+    strcpy(serverName, "server");
 
-    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, (char*)"clientA", (char*)"server");
+    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, clientName, serverName);
 }
 
 Message* createListenForClientsMessage(int serverPort) {
     char msgStr[80];
     memset(msgStr, '\0', 80);
     sprintf(msgStr, "listen %i", serverPort);
+    char myName[25];
+    memset(myName, '\0', 25);
+    strcpy(myName, "server");
 
-    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, (char*)"server", (char*)"");
+
+    return new Message(Message_Stack_Control, msgStr, strlen(msgStr), 0, myName, (char*)"");
 }

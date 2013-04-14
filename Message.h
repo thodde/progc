@@ -27,7 +27,7 @@ public:
 };
 
 
-Message* createConnectToServerMessage(char *serverName, int serverPort);
+Message* createConnectToServerMessage(char *serverAddress, char *clientName, int serverPort);
 Message* createListenForClientsMessage(int serverPort);
 
 //arbitrary max message length 50 packets
