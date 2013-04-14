@@ -36,7 +36,7 @@ int ChatClient::run(int argc, char *argv[]) {
 
         //create an object for accessing the data link layer
         NetworkLayer* networkLayer = new NetworkLayer();
-        if(!networkLayer->initialize(DLL_PORT)) {
+        if(!networkLayer->initialize(port)) {
             perror("Error, could not connect to internal services layers\n");
             delete networkLayer;
             exit(1);
@@ -126,7 +126,7 @@ void receive_message(Message* m) {
         printf("%s\n", m->data);
     }
     else if(m->type == Message_Kick) {
-        printf("Client is being removed from the chat room by the administrator!\n");
+        printf("Client is being removed from the chat room!\n");
     }
     else if(m->type == Message_Whisper) {
         printf("Private Message from Client: %s\n", m->data);
