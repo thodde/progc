@@ -36,7 +36,7 @@ int ChatClient::run(int argc, char *argv[]) {
 
         //create an object for accessing the data link layer
         NetworkLayer* networkLayer = new NetworkLayer();
-        if(!networkLayer->initialize(DLL_PORT)) {
+        if(!networkLayer->initialize(port)) {
             perror("Error, could not connect to internal services layers\n");
             delete networkLayer;
             exit(1);
