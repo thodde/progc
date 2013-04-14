@@ -24,8 +24,8 @@ int ChatServer::run(int argc, char *argv[]) {
         //assign a value to the port
         port = atoi(argv[1]);
 
-	//create an object for accessing the data link layer
-        NetworkLayer* networkLayer = new NetworkLayer();
+	    //create an object for accessing the data link layer
+        networkLayer = new NetworkLayer();
         if(!networkLayer->initialize(DLL_PORT)) {
             perror("Error, could not connect to internal services layers\n");
             delete networkLayer;
@@ -34,6 +34,10 @@ int ChatServer::run(int argc, char *argv[]) {
 
         return 0;
 }
+
+bool send_file() {
+    return true;
+}   
 
 void ChatServer::list_users() {
     // we can assume the user_list is not null because 
@@ -114,6 +118,24 @@ bool ChatServer::remove_user(char* user_name) {
     return true;
 }
 
+/**
+ * Sends a message to every user in the chat room.
+ */
+void ChatServer::speak(Message* m) {
+    int messagesSent = 0;
+    MemberNode* cursor = head_ptr;
+
+    //iterate through the user list and send the message to everyone
+    while(cursor->next != NULL) {
+        //do not send the message back to the sender
+        if(strcasecmp(cursor->username, m->sourceName) != 0) {
+            Message* message = new Message(Message_Speak, m->data, strlen(m->data), messagesSent++, (char*)"server", cursor->username);
+            networkLayer->sendMessage(message);
+        }
+        cursor = cursor->next;
+    }
+}
+
 void ChatServer::receive_message(Message* m) {
     if(m->type == Message_Join) {
         printf("%s joined the chat!\n", m->sourceName);
@@ -121,6 +143,7 @@ void ChatServer::receive_message(Message* m) {
     }
     else if(m->type == Message_Speak) {
         printf("%s:\n %s\n", m->sourceName, m->data);
+        speak(m);
     }
     else if(m->type == Message_Kick) {
         printf("%s is being removed from the chat room by %s!\n", m->targetName, m->sourceName);
@@ -132,6 +155,9 @@ void ChatServer::receive_message(Message* m) {
     else if(m->type == Message_List) {
         printf("Listing users currently connected to chat room...\n");
 	    list_users();
+    }
+    else if(m->type == Message_SendFile) {
+        printf("IM SENDING A GIANT FILE!!!!");
     }
     else if(m->type == Message_Quit) {
         printf("%s has left the room.\n", m->sourceName);

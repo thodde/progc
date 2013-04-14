@@ -27,8 +27,11 @@ class ChatServer {
         void list_users();
         bool add_user(char* user_name);
         bool remove_user(char* user_name);
+        bool send_file();
+        void speak(Message* m);
         void receive_message(Message* m);
 
+        NetworkLayer* networkLayer;
         MemberNode* head_ptr;
         MemberNode* user_list;
 
