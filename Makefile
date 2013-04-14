@@ -37,7 +37,7 @@ NetworkLayer.o: NetworkLayer.cpp Packet.cpp
 	g++ -c NetworkLayer.cpp Packet.cpp
 
 SlidingWindow.o: SlidingWindow.cpp
-	g++ -c -SlidingWindow.cpp
+	g++ -c SlidingWindow.cpp
 
 Message.o: Message.cpp
 	g++ -c Message.cpp

@@ -7,5 +7,5 @@ SlidingWindow::SlidingWindow(char *newClientName) {
 }
 
 SlidingWindow::~SlidingWindow() {
-
+    ;
 }
