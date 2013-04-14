@@ -60,9 +60,11 @@ int ChatClient::run(int argc, char *argv[]) {
                 if(!safe_to_connect) {
                     printf("Connecting to server...\n");
                     safe_to_connect = true;
+                    char* username = sendline+5;
 
-                    Message *m = new Message(Message_Join, sendline, strlen(sendline), messagesSent++, (char*)"source", (char*)"target");
-                    networkLayer->sendMessage(m);
+                    networkLayer->sendMessage(createConnectToServerMessage(hostname, username, port));
+                    //Message *m = new Message(Message_Join, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
+                    //networkLayer->sendMessage(m);
                 }
                 else {
                     printf("You already connected!!!\n");
