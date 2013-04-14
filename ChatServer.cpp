@@ -36,7 +36,15 @@ int ChatServer::run(int argc, char *argv[]) {
 }
 
 void ChatServer::list_users() {
+    // we can assume the user_list is not null because 
+    // the list command can only be used in a chat room
+    // by a user in the chat room, so the list will never be empty
+    MemberNode* cursor = user_list;
 
+    while(cursor->next != NULL) {
+        printf("%s\n", cursor->username);
+        cursor = cursor->next;
+    }
 }
 
 bool ChatServer::add_user(char* user_name) {
@@ -112,14 +120,14 @@ void ChatServer::receive_message(Message* m) {
 	    add_user(m->sourceName);
     }
     else if(m->type == Message_Speak) {
-        printf("%s: %s\n", m->sourceName, m->data);
+        printf("%s:\n %s\n", m->sourceName, m->data);
     }
     else if(m->type == Message_Kick) {
         printf("%s is being removed from the chat room by %s!\n", m->targetName, m->sourceName);
         remove_user(m->sourceName);
     }
     else if(m->type == Message_Whisper) {
-        printf("Private Message from %s: %s\n", m->sourceName, m->data);
+        printf("Private Message from %s:\n %s\n", m->sourceName, m->data);
     }
     else if(m->type == Message_List) {
         printf("Listing users currently connected to chat room...\n");
