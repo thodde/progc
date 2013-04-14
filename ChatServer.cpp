@@ -1,5 +1,11 @@
 #include "ChatServer.h"
 
+ChatServer::ChatServer() {
+    //create the list for storing users in the chat room
+    user_list = NULL;
+    head_ptr = user_list;
+}
+
 int ChatServer::run(int argc, char *argv[]) {
 	printf("%s\n\n", "");
         printf("-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-\n");
@@ -29,24 +35,61 @@ int ChatServer::run(int argc, char *argv[]) {
         return 0;
 }
 
-void receive_message(Message* m) {
+void ChatServer::list_users() {
+
+}
+
+bool ChatServer::add_user(char* user_name) {
+    if(user_name == NULL) 
+        return false;
+
+    if(user_list == NULL) {
+        user_list = new MemberNode();
+        user_list->next = NULL;
+        user_list->username = user_name;
+        head_ptr = user_list;
+    }
+
+    printf("Adding %s to user list.\n", user_name);
+
+    MemberNode* tmp = head_ptr;
+    while(tmp->next != NULL) {
+        tmp = tmp->next;
+    }
+
+    tmp->next = new MemberNode();
+    tmp = tmp->next;
+    tmp->username = user_name;
+    tmp->next = NULL;
+
+    return true;
+}
+
+bool ChatServer::remove_user(char* user_name) {
+
+}
+
+void ChatServer::receive_message(Message* m) {
     if(m->type == Message_Join) {
-        printf("Client joined the chat!\n");
+        printf("%s joined the chat!\n", m->sourceName);
+	    add_user(m->sourceName);
     }
     else if(m->type == Message_Speak) {
-        printf("%s\n", m->data);
+        printf("%s: %s\n", m->sourceName, m->data);
     }
     else if(m->type == Message_Kick) {
-        printf("Client is being removed from the chat room by the administrator!\n");
+        printf("%s is being removed from the chat room by %s!\n", m->targetName, m->sourceName);
+        remove_user(m->sourceName);
     }
     else if(m->type == Message_Whisper) {
-        printf("Private Message from Client: %s\n", m->data);
+        printf("Private Message from %s: %s\n", m->sourceName, m->data);
     }
     else if(m->type == Message_List) {
-        printf("Listing users currently connected to chat room:\n");
+        printf("Listing users currently connected to chat room...\n");
+	    list_users();
     }
     else if(m->type == Message_Quit) {
-        printf("Exiting...\n");
+        printf("%s has left the room.\n", m->sourceName);
         exit(0);
     }
 }

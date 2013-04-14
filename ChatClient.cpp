@@ -23,25 +23,16 @@ int ChatClient::run(int argc, char *argv[]) {
         printf("%s\n", ""); 
 
         //make sure the correct number of arguments are specified
-        if (argc < 3 || argc > 4) {
+        if (argc < 3) {
             fprintf(stderr, "\tusage: %s <host> <port> [optional: <error percentage>]\n", argv[0]);
             fprintf(stderr, "\t<host>\t\t\t- IP Address or hostname of server\n");
             fprintf(stderr, "\t<port>\t\t\t- port to connect on\n");
-       	    fprintf(stderr, "\t<error percentage>\t- optional packet drop rate [1-100 default: 0]\n");
             exit(1);
         }
 
         // sets the hostname and the port to communicate with
         hostname = argv[1];
         port = atoi(argv[2]);
-
-        //set the percentage of bits to drop [default: 0]
-        if(argv[3] != NULL) {
-            error_rate = atoi(argv[3]);
-        }
-        else {
-            error_rate = 0;
-        }
 
         //create an object for accessing the data link layer
         NetworkLayer* networkLayer = new NetworkLayer();
