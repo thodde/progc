@@ -154,8 +154,8 @@ bool DatalinkLayer::receiveDataFromNetworkLayer() {
                 }
             }
         }
-        return sendAllAvailableFrames();
     }
+    return sendAllAvailableFrames();
 }
 
 bool DatalinkLayer::sendAllAvailableFrames() {
@@ -185,19 +185,22 @@ bool DatalinkLayer::sendAllAvailableFrames() {
 bool DatalinkLayer::receiveAllAvailablePackets() {
     for (int i = 0; i < MAX_ENDPOINT_CONNECTIONS; i++) {
         if (myWindows[i] != NULL) {
-            Packet *outPacket = myWindows[i]->getPacketToReceive();
-            while (outPacket != NULL) {
-                char* serializedPacket = outPacket->serialize();
-                printf("Forwarding to Network Layer Packet (%i) with payload (%i)\n", outPacket->packetId, outPacket->payloadUsed);
-                statsPacketsReceived++;
+            FrameNode *frameList = myWindows[i]->getFullPacketToReceive();
+            if (frameList != NULL) {
+                Packet *outPacket = convertFramesToPacket(frameList);
 
-                if (!guaranteedSocketWrite(internalUpFD, serializedPacket, MAX_PACKET_SIZE))
-                     printf("ERROR writing to socket");
+                while (outPacket != NULL) {
+                    char* serializedPacket = outPacket->serialize();
+                    printf("Forwarding to Network Layer Packet (%i) with payload (%i)\n", outPacket->packetId, outPacket->payloadUsed);
+                    statsPacketsReceived++;
 
-                 outPacket = myWindows[i]->getPacketToReceive();
+                    if (!guaranteedSocketWrite(internalUpFD, serializedPacket, MAX_PACKET_SIZE))
+                         printf("ERROR writing to socket");
+                }
             }
         }
     }
+    return true;
 }
 
 bool DatalinkLayer::receiveDataFromPhysicalLayer() {
@@ -248,8 +251,9 @@ bool DatalinkLayer::receiveDataFromPhysicalLayer() {
         }
 
         receiveAllAvailablePackets();
-        sendAllAvailableFrames();
     }
+
+    sendAllAvailableFrames();
     return true;
 }
 
@@ -264,7 +268,7 @@ FrameNode* DatalinkLayer::convertControlPacketToFrame(Packet *inPacket) {
 
     FrameNode *retval = new FrameNode();
     retval->next = NULL;
-    retval->data = new Frame(curFrameId++, true, Frame_Stack_Control, inPacket->sourceName, inPacket->targetName);
+    retval->data = new Frame(curFrameId++, true, Frame_Stack_Control, inPacket->sourceName, inPacket->targetName, true);
     retval->data->setPayload(inPacket->payload, inPacket->payloadUsed);
     retval->data->type = Frame_Stack_Control;
     return retval;
@@ -284,9 +288,9 @@ FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
     headPtr->next = NULL;
 
     if (inPacket->type == Packet_Join)
-        headPtr->data = new Frame(curFrameId++, false, Frame_Join, inPacket->sourceName, inPacket->targetName);
+        headPtr->data = new Frame(curFrameId++, false, Frame_Join, inPacket->sourceName, inPacket->targetName, true);
     else
-        headPtr->data = new Frame(curFrameId++, false, Frame_Data, inPacket->sourceName, inPacket->targetName);
+        headPtr->data = new Frame(curFrameId++, false, Frame_Data, inPacket->sourceName, inPacket->targetName, true);
 
     int bytesAdded = headPtr->data->setPayload(byteStream, serializedLength);
     byteStream += bytesAdded;
@@ -298,7 +302,7 @@ FrameNode* DatalinkLayer::convertPacketsToFrames(Packet* inPacket) {
         cursor->next = new FrameNode();
         cursor = cursor->next;
         cursor->next = NULL;
-        cursor->data = new Frame(curFrameId++, false, Frame_Data, inPacket->sourceName, inPacket->targetName);
+        cursor->data = new Frame(curFrameId++, false, Frame_Data, inPacket->sourceName, inPacket->targetName, false);
         bytesAdded = cursor->data->setPayload(byteStream, serializedLength);
         byteStream += bytesAdded;
         serializedLength -= bytesAdded;
@@ -348,7 +352,6 @@ Packet* DatalinkLayer::convertFramesToPacket(FrameNode *headptr) {
 
     return new Packet(packetStream);
 }
-
 
 int main (int argc, char *argv[]) {
     int dllPort = DLL_PORT;

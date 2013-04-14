@@ -24,6 +24,9 @@ struct FrameWindowEntry {
 };
 
 
+/**
+ *  Implied requirement: an entire packet's worth of frames can fit in the window
+ */
 class SlidingWindow {
 public:
     SlidingWindow(char *newClientName);
@@ -51,7 +54,7 @@ public:
     /**
      *  Queries if a complete packet has been received.
      */
-    Packet* getPacketToReceive();
+    FrameNode* getFullPacketToReceive();
 
 
 
@@ -59,6 +62,13 @@ private:
     bool addFrameWindowEntryToBuffer(FrameWindowEntry *newEntry);
     FrameWindowEntry* myWindow[MAX_WINDOW_SIZE];
     FrameWindowEntry* overflowHead;
+
+    void orderFramesById();
+
+    /**
+     *  Returns true if there were frames to move into window.  False otherwise
+     */
+    bool moveFramesIntoWindow();
 
 
 };

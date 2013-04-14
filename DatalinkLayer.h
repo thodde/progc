@@ -99,9 +99,9 @@ public:
     // converts the packet from the Network layer to a consumable Frame by the Physical Layer
     FrameNode* convertPacketsToFrames(Packet* inPacket);
     FrameNode* convertControlPacketToFrame(Packet *inPacket);
-
     Packet* convertFramesToPacket(FrameNode *headptr);
     Packet* convertFrameJoinToPacket(FrameNode *headptr);
+
     bool receiveDataFromPhysicalLayer();
     bool receiveDataFromNetworkLayer();
 

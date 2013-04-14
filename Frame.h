@@ -11,7 +11,7 @@ typedef enum { Frame_Join, Frame_Data, Frame_Ack, Frame_NAck, Frame_Stack_Contro
 struct Frame {
 public:
 
-    Frame(unsigned int newFrameId, bool isFinalFrame, Frame_Type newType, char *newSourceName, char *newTargetName);
+    Frame(unsigned int newFrameId, bool isFinalFrame, Frame_Type newType, char *newSourceName, char *newTargetName, bool newIsFirstFrame);
     Frame(char* instream);
     Frame_Type type;
     char sourceName[10];
@@ -26,6 +26,7 @@ public:
     char* serialize();
     bool deSerialize(char* stream);
     bool finalFrame;
+    bool isFirstFrame;
 
     unsigned int frameId; // identifier used by sliding window protocol
     char payload[MAX_FRAME_PAYLOAD];
