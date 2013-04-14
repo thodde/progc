@@ -35,26 +35,35 @@ int ChatServer::run(int argc, char *argv[]) {
         return 0;
 }
 
+//TODO: Implement
 bool send_file() {
     return true;
 }   
 
-void ChatServer::list_users() {
-    // we can assume the user_list is not null because 
-    // the list command can only be used in a chat room
-    // by a user in the chat room, so the list will never be empty
+/**
+ * Display the list of currently connected users. Sends each
+ * username in a separate message.
+ */
+void ChatServer::list_users(Message* m) {
+    int messagesSent = 0;
     MemberNode* cursor = user_list;
 
     while(cursor->next != NULL) {
         printf("%s\n", cursor->username);
+        Message* message = new Message(Message_List, cursor->username, strlen(cursor->username), messagesSent++, (char*)"server", m->sourceName);
+        networkLayer->sendMessage(message);
         cursor = cursor->next;
     }
 }
 
+/**
+ * Add a user to the chat room
+ */
 bool ChatServer::add_user(char* user_name) {
     if(user_name == NULL) 
         return false;
 
+    //create the list
     if(user_list == NULL) {
         user_list = new MemberNode();
         user_list->next = NULL;
@@ -64,11 +73,13 @@ bool ChatServer::add_user(char* user_name) {
 
     printf("Adding %s to user list.\n", user_name);
 
+    //iterate to the end of the list
     MemberNode* tmp = head_ptr;
     while(tmp->next != NULL) {
         tmp = tmp->next;
     }
 
+    //add the new user to the end of the list
     tmp->next = new MemberNode();
     tmp = tmp->next;
     tmp->username = user_name;
@@ -77,7 +88,14 @@ bool ChatServer::add_user(char* user_name) {
     return true;
 }
 
+/**
+ * Remove a user from the chat room. There are two scenarios:
+ *   1) The user has been kicked out
+ *   2) The user has requested to exit
+ */
 bool ChatServer::remove_user(char* user_name) {
+    int messagesSent = 0;
+
     if(user_name == NULL) 
         return false;
 
@@ -114,6 +132,11 @@ bool ChatServer::remove_user(char* user_name) {
 
         previous = previous->next;
     }
+
+    char* msg;
+    strcpy(msg, "You have been removed from the chat room");
+    Message* message = new Message(Message_Kick, msg, strlen(msg), messagesSent++, (char*)"server", user_name);
+    networkLayer->sendMessage(message);
     
     return true;
 }
@@ -143,10 +166,38 @@ void ChatServer::whisper(Message* m) {
     int messagesSent = 0;
     MemberNode* cursor = head_ptr;
 
+    //send the message directly to the user
     Message* message = new Message(Message_Speak, m->data, strlen(m->data), messagesSent++, (char*)"server", m->targetName);
     networkLayer->sendMessage(message);
 }
 
+/**
+ * Tells every user in the chat room that a user has left.
+ */
+void ChatServer::quit(Message* m) {
+    int messagesSent = 0;
+    char* exitMessage;
+    MemberNode* cursor = head_ptr;
+
+    //build the message to be sent
+    strcpy(exitMessage, m->sourceName);
+    strcat(exitMessage, " has left the chat room.");
+
+    //iterate through the user list and send the message to everyone
+    while(cursor->next != NULL) {
+        //do not send the message back to the sender
+        if(strcasecmp(cursor->username, m->sourceName) != 0) {
+            Message* message = new Message(Message_Quit, exitMessage, strlen(exitMessage), messagesSent++, (char*)"server", cursor->username);
+            networkLayer->sendMessage(message);
+        }
+        cursor = cursor->next;
+    }
+}
+
+/**
+ * This function determines what type of message has been received
+ * and it acts accordingly.
+ */
 void ChatServer::receive_message(Message* m) {
     if(m->type == Message_Join) {
         printf("%s joined the chat!\n", m->sourceName);
@@ -166,14 +217,16 @@ void ChatServer::receive_message(Message* m) {
     }
     else if(m->type == Message_List) {
         printf("Listing users currently connected to chat room...\n");
-	    list_users();
+	    list_users(m);
     }
     else if(m->type == Message_SendFile) {
+        //TODO: Implement
         printf("IM SENDING A GIANT FILE!!!!");
     }
     else if(m->type == Message_Quit) {
         printf("%s has left the room.\n", m->sourceName);
-        exit(0);
+        remove_user(m->sourceName);
+        quit(m);
     }
 }
 

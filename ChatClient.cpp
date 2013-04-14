@@ -126,7 +126,7 @@ void receive_message(Message* m) {
         printf("%s\n", m->data);
     }
     else if(m->type == Message_Kick) {
-        printf("Client is being removed from the chat room by the administrator!\n");
+        printf("Client is being removed from the chat room!\n");
     }
     else if(m->type == Message_Whisper) {
         printf("Private Message from Client: %s\n", m->data);
