@@ -13,6 +13,7 @@
 #include "common.h"
 #include "Frame.h"
 #include "Packet.h"
+#include "SlidingWindow.h"
 
 #define MAX_WINDOW_SIZE 4
 

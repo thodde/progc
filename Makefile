@@ -21,8 +21,8 @@ ChatServer.o: ChatServer.cpp
 ChatClient.o: ChatClient.cpp
 	g++ -c ChatClient.cpp
 
-DatalinkLayer: DatalinkLayer.o Frame.o Packet.o common.o
-	g++ -o DatalinkLayer.exe DatalinkLayer.o Frame.o Packet.o common.o
+DatalinkLayer: DatalinkLayer.o Frame.o Packet.o common.o SlidingWindow.o
+	g++ -o DatalinkLayer.exe DatalinkLayer.o Frame.o Packet.o common.o SlidingWindow.o
 
 DatalinkLayer.o: DatalinkLayer.cpp
 	g++ -c DatalinkLayer.cpp
@@ -35,6 +35,9 @@ PhysicalLayer.o: PhysicalLayer.cpp
 
 NetworkLayer.o: NetworkLayer.cpp Packet.cpp
 	g++ -c NetworkLayer.cpp Packet.cpp
+
+SlidingWindow.o: SlidingWindow.cpp
+	g++ -c -SlidingWindow.cpp
 
 Message.o: Message.cpp
 	g++ -c Message.cpp
