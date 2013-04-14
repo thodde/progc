@@ -29,6 +29,7 @@ class ChatServer {
         bool remove_user(char* user_name);
         bool send_file();
         void speak(Message* m);
+        void whisper(Message* m);
         void receive_message(Message* m);
 
         NetworkLayer* networkLayer;

@@ -136,6 +136,17 @@ void ChatServer::speak(Message* m) {
     }
 }
 
+/**
+ * Sends a message to a single user in the chat room.
+ */
+void ChatServer::whisper(Message* m) {
+    int messagesSent = 0;
+    MemberNode* cursor = head_ptr;
+
+    Message* message = new Message(Message_Speak, m->data, strlen(m->data), messagesSent++, (char*)"server", m->targetName);
+    networkLayer->sendMessage(message);
+}
+
 void ChatServer::receive_message(Message* m) {
     if(m->type == Message_Join) {
         printf("%s joined the chat!\n", m->sourceName);
@@ -151,6 +162,7 @@ void ChatServer::receive_message(Message* m) {
     }
     else if(m->type == Message_Whisper) {
         printf("Private Message from %s:\n %s\n", m->sourceName, m->data);
+        whisper(m);
     }
     else if(m->type == Message_List) {
         printf("Listing users currently connected to chat room...\n");
