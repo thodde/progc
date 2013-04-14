@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-typedef enum { Frame_Join, Frame_Data, Frame_Ack, Frame_Stack_Control } Frame_Type;
+typedef enum { Frame_Join, Frame_Data, Frame_Ack, Frame_NAck, Frame_Stack_Control } Frame_Type;
 
 #define     MAX_FRAME_SIZE          140
 #define     MAX_FRAME_PAYLOAD       100 //this will need to be lowered for the frame header
