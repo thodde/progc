@@ -15,9 +15,22 @@
 #include "Message.h"
 #include "NetworkLayer.h"
 
+struct MemberNode {
+    char* username;
+    MemberNode* next;
+};
+
 class ChatServer {
 	public:
+        ChatServer();
 		int run(int argc, char *argv[]);
+        void list_users();
+        bool add_user(char* user_name);
+        bool remove_user(char* user_name);
+        void receive_message(Message* m);
+
+        MemberNode* head_ptr;
+        MemberNode* user_list;
 
 	private:
    		int port;

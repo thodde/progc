@@ -21,7 +21,6 @@ class ChatClient {
     public:
         int port;
         char* hostname;
-        int error_rate;
 
     //funtion prototypes
     public:
