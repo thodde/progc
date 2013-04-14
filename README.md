@@ -81,7 +81,6 @@ Launch the StartupLayers.sh script with:
 /// 
 ///////////////////////////////////////////////////////////////////////////
 
-NAME 
 *** help 
          Display a list of available commands.
          Example:
