@@ -44,7 +44,6 @@ int ChatServer::run(int argc, char *argv[]) {
         }
         else {
             if (waitingForResponse) {
-                //networkLayer->sendMessage(new Message(Message_Speak, (char*)"listening...", strlen("listening..."), 1, (char*)"server", (char*)"trevor"));
                 response = networkLayer->checkForMessages(hasError);
 
                 if (response != NULL) {

@@ -12,7 +12,7 @@ if [ -z "$HOST" ] ; then
 fi
 
 if [ -z "$PORT" ] ; then
-	PORT=2666
+	PORT=2002
 fi
 
 declare result=$(pgrep "PhysicalLayer")

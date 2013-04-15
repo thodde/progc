@@ -2,12 +2,6 @@
 # This script starts up the two bottom layers before starting the application layer
 #!/bin/bash -ex 
 
-declare PORT=$1
-
-if [ -z "$PORT" ] ; then
-	PORT=2666
-fi
-
 declare result=$(pgrep "PhysicalLayer")
 if [ -n "$result" ] ; then
 	echo "Physical Layer process already running. Killing..."
