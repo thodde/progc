@@ -88,6 +88,12 @@ int main (int argc, char *argv[]) {
                 done = true;
             else if (input[0] == 'c') {
                 if(!sentJoinMessage) {
+                    //char joinMsg[200];
+                    //memset(joinMsg, '\0', 200);
+                    //sprintf(joinMsg, "Join %s", clientName);
+                    //testMsg = new Message(Message_Speak, joinMsg, strlen(joinMsg), messagesSent++, clientName, serverName);
+                    //myNL->sendMessage(testMsg);
+
                     testMsg = createConnectToServerMessage(serverName, clientName, 2666);
                     isServer = false;
                     myNL->sendMessage(testMsg);
