@@ -11,17 +11,14 @@ A C++ chat client/server program that implements the sliding window protocol
 with a size of 4. 
 
 
-///////////////////////////////////////////////////////////////////////////
-///
-/// Instructions
-///
-///////////////////////////////////////////////////////////////////////////
-
 ***Instructions to use by script:***
 
 Launch the StartupLayers.sh script with:
 
-    ./StartupLayers.sh
+        ./ServerStartup.sh
+
+    In a separate terminal:
+        ./ClientStartup.sh
 
 ***Instructions to use by manually launching layers:***
 
@@ -73,11 +70,7 @@ Launch the StartupLayers.sh script with:
                 D is the port the data link layer is listening on (Must be the same as D from previous command)
                     valid entries are integers: 1025-66535
 
-///////////////////////////////////////////////////////////////////////////
-/// 
-/// Supported Commands
-/// 
-///////////////////////////////////////////////////////////////////////////
+***Supported Commands***
 
 *** help 
          Display a list of available commands.
@@ -117,11 +110,7 @@ Launch the StartupLayers.sh script with:
         Example:
             quit
  
-///////////////////////////////////////////////////////////////////////////
-///
-/// @Extras
-///
-///////////////////////////////////////////////////////////////////////////
+***Extras***
 
 *** Default Values
 
