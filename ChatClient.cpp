@@ -14,6 +14,9 @@ int ChatClient::run(int argc, char *argv[]) {
         struct in_addr** addr_list;
         struct sockaddr_in servaddr;
         char* username;
+        bool waitingForResponse = false;
+        Message* response = NULL;
+        bool hasError = false;
 
         //display a nice interface
         printf("%s\n\n", "");
@@ -47,17 +50,25 @@ int ChatClient::run(int argc, char *argv[]) {
 
         while(1) {
             //read from stdin
-		    printf("Enter a command: ");
-		    my_string = (char*) malloc(num_bytes + 1);
-		    bytes_read = getline(&my_string, &num_bytes, stdin);
-		    strcpy(sendline, my_string);
-		    p = strchr(sendline, '\n');
-		    if (p != NULL) {
-			    *p = '\0';  // get rid of the '\n'
+	        printf("Enter a command: ");
+	        my_string = (char*) malloc(num_bytes + 1);
+	        bytes_read = getline(&my_string, &num_bytes, stdin);
+	        strcpy(sendline, my_string);
+	        p = strchr(sendline, '\n');
+	        if (p != NULL) {
+		        *p = '\0';  // get rid of the '\n'
             }
 
-        	//If the client receives a join command, start a connection to the server
-        	if(strncasecmp(sendline, "join ", 5) == 0) {
+            //see if any new messages have arrived since we sent the last message
+            response = networkLayer->checkForMessages(hasError);
+
+            if (response != NULL) {
+                printf("successfully received message: \n%s\n", response->data);
+                receive_message(response);
+            }
+
+        	    //If the client receives a join command, start a connection to the server
+        	    if(strncasecmp(sendline, "join ", 5) == 0) {
                 if(!safe_to_connect) {
                     printf("Connecting to server...\n");
                     safe_to_connect = true;
@@ -121,7 +132,7 @@ int ChatClient::run(int argc, char *argv[]) {
     return 0;
 }
 
-void receive_message(Message* m) {
+void ChatClient::receive_message(Message* m) {
     if(m->type == Message_Join) {
         printf("%s joined the chat!\n", m->sourceName);
     }
@@ -138,8 +149,7 @@ void receive_message(Message* m) {
         printf("Listing users currently connected to chat room...\n");
     }
     else if(m->type == Message_SendFile) {
-        //TODO: Implement
-        printf("IM SENDING A GIANT FILE!!!!");
+        printf("Sending file...\n");
     }
     else if(m->type == Message_Quit) {
         printf("%s has left the room.\n", m->sourceName);

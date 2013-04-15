@@ -246,8 +246,7 @@ void ChatServer::receive_message(Message* m) {
 	    list_users(m);
     }
     else if(m->type == Message_SendFile) {
-        //TODO: Implement
-        printf("IM SENDING A GIANT FILE!!!!");
+        printf("Sending file...\n");
     }
     else if(m->type == Message_Quit) {
         printf("%s has left the room.\n", m->sourceName);

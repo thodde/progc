@@ -42,10 +42,8 @@ Launch the StartupLayers.sh script with:
                 C is the port the data link layer will transmit data to the physical layer on (Must be the same as C from previous command)
                     valid entries are integers: 1025-66535
 
-        ./ChatServer.exe E D
+        ./ChatServer.exe D
             Where:
-                E is the IP Address of the server machine.
-                    Supports 'localhost' or IP address of the server machine
                 D is the port the data link layer is listening on (Must be the same as D from previous command)
                     valid entries are integers: 1025-66535
 
@@ -69,7 +67,7 @@ Launch the StartupLayers.sh script with:
         ./ChatClient.exe E F D
             Where:
                 E is the IP Address of the server machine.
-                    Supports 'localhost' or IP address of the server machine
+                    Supports hostname or IP address of the server machine
                 F is the port of the server machine
                     valid entries are integers: 1025-66535
                 D is the port the data link layer is listening on (Must be the same as D from previous command)
@@ -109,13 +107,16 @@ Launch the StartupLayers.sh script with:
         Display a list of all users in the chat room.
         Example:
             list
+**  sendfile
+	Allows the users to exchange files.
+	Example:
+		sendfile /home/Desktop/test.txt
 
 **  quit
         Allow a user to gracefully exit the chat room.
         Example:
             quit
  
-**\        
 ///////////////////////////////////////////////////////////////////////////
 ///
 /// @Extras
@@ -126,5 +127,4 @@ Launch the StartupLayers.sh script with:
 
         Physical layer listening port - 2001
         Data link layer listening port - 2002
-
 

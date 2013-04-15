@@ -112,11 +112,6 @@ int main (int argc, char *argv[]) {
             }
             else if (input[0] == 'm') {
                 waitingForResponse = true;
-                //response = myNL->checkForMessages(hasError);
-                //if (response != NULL) {
-                //    waitingForResponse = false;
-                //    printf("successfully received message: \n%s\n", response->data);
-                //}
             }
             memset(input, '\0', 100);
         }
