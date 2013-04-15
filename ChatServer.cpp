@@ -53,7 +53,7 @@ int ChatServer::run(int argc, char *argv[]) {
                 }
             }
             else {
-              waitingForResponse = true;
+                waitingForResponse = true;
             }
         }
     }
@@ -72,7 +72,7 @@ bool send_file() {
  */
 void ChatServer::list_users(Message* m) {
     int messagesSent = 0;
-    MemberNode* cursor = user_list;
+    MemberNode* cursor = head_ptr;
 
     while(cursor->next != NULL) {
         printf("%s\n", cursor->username);

@@ -75,27 +75,27 @@ int ChatClient::run(int argc, char *argv[]) {
             //make sure we are connected to the server before allowing the user to execute other commands
             if(safe_to_connect) {
                 if(strncasecmp(sendline, "speak ", 6) == 0) {
-                    printf("speak\n");
                     Message *m = new Message(Message_Speak, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "whisper ", 8) == 0) {
-                    printf("whisper\n");
                     Message *m = new Message(Message_Whisper, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "kick ", 5) == 0) {
-                    printf("kick\n");
                     Message *m = new Message(Message_Kick, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "list", 4) == 0) {
-                    printf("list\n");
                     Message *m = new Message(Message_List, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                 }
+                else if(strncasecmp(sendline, "sendfile", 8) == 0) {
+                    //TODO: Implement
+                    Message *m = new Message(Message_SendFile, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
+                    networkLayer->sendMessage(m);
+                }
                 else if(strncasecmp(sendline, "quit", 4) == 0) {
-                    printf("Remove this message later...Exiting...\n");
                     Message *m = new Message(Message_Quit, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                     exit(0);       
@@ -123,22 +123,26 @@ int ChatClient::run(int argc, char *argv[]) {
 
 void receive_message(Message* m) {
     if(m->type == Message_Join) {
-        printf("Client joined the chat!\n");
+        printf("%s joined the chat!\n", m->sourceName);
     }
     else if(m->type == Message_Speak) {
-        printf("%s\n", m->data);
+        printf("%s:\n %s\n", m->sourceName, m->data);
     }
     else if(m->type == Message_Kick) {
-        printf("Client is being removed from the chat room!\n");
+        printf("%s is being removed from the chat room by %s!\n", m->targetName, m->sourceName);
     }
     else if(m->type == Message_Whisper) {
-        printf("Private Message from Client: %s\n", m->data);
+        printf("Private Message from %s:\n %s\n", m->sourceName, m->data);
     }
     else if(m->type == Message_List) {
-        printf("Listing users currently connected to chat room:\n");
+        printf("Listing users currently connected to chat room...\n");
+    }
+    else if(m->type == Message_SendFile) {
+        //TODO: Implement
+        printf("IM SENDING A GIANT FILE!!!!");
     }
     else if(m->type == Message_Quit) {
-        printf("Exiting...\n");
+        printf("%s has left the room.\n", m->sourceName);
     }
 }
 
@@ -167,6 +171,10 @@ void ChatClient::show_help() {
         printf("\t- List - Display a list of all users in the chat room.\n");
         printf("\t\tExample: \n");
         printf("\t\t\tlist\n\n");
+
+        printf("\t- Sendfile - Display a list of all users in the chat room.\n");
+        printf("\t\tExample: \n");
+        printf("\t\t\tsendfile /home/Desktop/chat.log\n\n");
 
         printf("\t- Help - Display these instructions about how to use the chat room commands.\n");
         printf("\t\tExample: \n");
