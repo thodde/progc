@@ -101,10 +101,12 @@ bool PhysicalLayer::run() {
                         return 0;
                     }
                     for (int i = 0; i < MAX_CONNECTIONS; i++){
-                        clientFDs[i] = new ClientConnection();
-                        clientFDs[i]->socketFD = newsockfd;
-                        memset(clientFDs[i]->clientName, '\0', 10);
-                        break;
+                        if (clientFDs[i] == NULL) {
+                            clientFDs[i] = new ClientConnection();
+                            clientFDs[i]->socketFD = newsockfd;
+                            memset(clientFDs[i]->clientName, '\0', 10);
+                            break;
+                        }
                     }
                 }
             }
