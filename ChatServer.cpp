@@ -8,6 +8,9 @@ ChatServer::ChatServer() {
 
 int ChatServer::run(int argc, char *argv[]) {
     bool sentJoinMessage = false;
+    Message* response = NULL;
+    bool hasError = false;
+
 	printf("%s\n\n", "");
     printf("-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-\n");
     printf("\tWelcome to the Chat Room: Server Side!\n");
@@ -38,6 +41,7 @@ int ChatServer::run(int argc, char *argv[]) {
             networkLayer->sendMessage(createListenForClientsMessage(2666));
             sentJoinMessage = true;
         }
+        response = networkLayer->checkForMessages(hasError);
     }
 
     return 0;

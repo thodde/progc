@@ -4,4 +4,4 @@
 .idea/*
 !Makefile
 !StartupLayers.sh
-
+*.log
