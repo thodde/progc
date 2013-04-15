@@ -31,6 +31,6 @@ echo "Please Wait. Starting Datalink Layer..."
 sleep 5
 
 echo "Starting Server..."
-./ChatServer.exe $PORT 
+./ChatServer.exe 3002 
 
 echo "Done."

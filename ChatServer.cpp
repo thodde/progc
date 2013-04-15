@@ -10,6 +10,7 @@ int ChatServer::run(int argc, char *argv[]) {
     bool sentJoinMessage = false;
     Message* response = NULL;
     bool hasError = false;
+    bool waitingForResponse = false;
 
 	printf("%s\n\n", "");
     printf("-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-\n");
@@ -41,7 +42,21 @@ int ChatServer::run(int argc, char *argv[]) {
             networkLayer->sendMessage(createListenForClientsMessage(2666));
             sentJoinMessage = true;
         }
-        response = networkLayer->checkForMessages(hasError);
+        else {
+            if (waitingForResponse) {
+                //networkLayer->sendMessage(new Message(Message_Speak, (char*)"listening...", strlen("listening..."), 1, (char*)"server", (char*)"trevor"));
+                response = networkLayer->checkForMessages(hasError);
+
+                if (response != NULL) {
+                    waitingForResponse = false;
+                    printf("successfully received message: \n%s\n", response->data);
+                    receive_message(response);
+                }
+            }
+            else {
+              waitingForResponse = true;
+            }
+        }
     }
 
     return 0;

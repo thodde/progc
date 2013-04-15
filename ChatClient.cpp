@@ -13,6 +13,7 @@ int ChatClient::run(int argc, char *argv[]) {
         struct hostent* lh;
         struct in_addr** addr_list;
         struct sockaddr_in servaddr;
+        char* username;
 
         //display a nice interface
         printf("%s\n\n", "");
@@ -24,7 +25,7 @@ int ChatClient::run(int argc, char *argv[]) {
 
         //make sure the correct number of arguments are specified
         if (argc < 3) {
-            fprintf(stderr, "\tusage: %s <host> <port> [optional: <error percentage>]\n", argv[0]);
+            fprintf(stderr, "\tusage: %s <host> <port>\n", argv[0]);
             fprintf(stderr, "\t<host>\t\t\t- IP Address or hostname of server\n");
             fprintf(stderr, "\t<port>\t\t\t- port to connect on\n");
             exit(1);
@@ -55,47 +56,47 @@ int ChatClient::run(int argc, char *argv[]) {
 			    *p = '\0';  // get rid of the '\n'
             }
 
-            	//If the client receives a join command, start a connection to the server
-            	if(strncasecmp(sendline, "join ", 5) == 0) {
+        	//If the client receives a join command, start a connection to the server
+        	if(strncasecmp(sendline, "join ", 5) == 0) {
                 if(!safe_to_connect) {
                     printf("Connecting to server...\n");
                     safe_to_connect = true;
-                    char* username = sendline+5;
+                    username = sendline+5;
 
-                    networkLayer->sendMessage(createConnectToServerMessage(hostname, username, port));
+                    networkLayer->sendMessage(createConnectToServerMessage(hostname, username, 2666));
                     //Message *m = new Message(Message_Join, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     //networkLayer->sendMessage(m);
                 }
                 else {
                     printf("You already connected!!!\n");
                 }
-            	}
+            }
 
             //make sure we are connected to the server before allowing the user to execute other commands
             if(safe_to_connect) {
                 if(strncasecmp(sendline, "speak ", 6) == 0) {
                     printf("speak\n");
-                    Message *m = new Message(Message_Speak, sendline, strlen(sendline), messagesSent++, (char*)"source", (char*)"target");
+                    Message *m = new Message(Message_Speak, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "whisper ", 8) == 0) {
                     printf("whisper\n");
-                    Message *m = new Message(Message_Whisper, sendline, strlen(sendline), messagesSent++, (char*)"source", (char*)"target");
+                    Message *m = new Message(Message_Whisper, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "kick ", 5) == 0) {
                     printf("kick\n");
-                    Message *m = new Message(Message_Kick, sendline, strlen(sendline), messagesSent++, (char*)"source", (char*)"target");
+                    Message *m = new Message(Message_Kick, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "list", 4) == 0) {
                     printf("list\n");
-                    Message *m = new Message(Message_List, sendline, strlen(sendline), messagesSent++, (char*)"source", (char*)"target");
+                    Message *m = new Message(Message_List, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                 }
                 else if(strncasecmp(sendline, "quit", 4) == 0) {
                     printf("Remove this message later...Exiting...\n");
-                    Message *m = new Message(Message_Quit, sendline, strlen(sendline), messagesSent++, (char*)"source", (char*)"target");
+                    Message *m = new Message(Message_Quit, sendline, strlen(sendline), messagesSent++, username, (char*)"server");
                     networkLayer->sendMessage(m);
                     exit(0);       
                 }
