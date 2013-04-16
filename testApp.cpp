@@ -1,11 +1,8 @@
-
-
 #include <stdio.h>
 #include <time.h>
 #include "common.h"
 #include "Message.h"
 #include "NetworkLayer.h"
-
 
 int main (int argc, char *argv[]) {
     printf("Starting test\n");
@@ -32,13 +29,9 @@ int main (int argc, char *argv[]) {
     strcat(testChar, "the order \"1, 2\" at the opposite end. They will also be error-free. I'm so certain, in fact, they will be error-free, that I'm just going to put my fingers in my ears and chant ");
     strcat(testChar, "la la la la if anyone tries to claim otherwise. What uses stream sockets? Well, you may have heard of the telnet application, yes? It uses stream sockets. ");
 
-    //printf("Sending body of size (%i): \n%s\n", (int)strlen(testChar), testChar);
-
     unsigned int messagesSent = 0;
 
     Message *testMsg;
-    //Message *testMsg = new Message(Message_Join, testChar, strlen(testChar), messagesSent++);
-    //myNL->sendMessage(testMsg);
 
     Message *response = NULL;
     char serverName[25];
@@ -48,8 +41,6 @@ int main (int argc, char *argv[]) {
     memset(clientName, '\0', 25);
     strcpy(clientName, "clientA");
 
-
-    //printf("Waiting for response\n");
     bool hasError = false;
     bool isServer = false;
 
@@ -70,7 +61,6 @@ int main (int argc, char *argv[]) {
             }
         }
         else {
-            //if (input != '\n')
             printf("Input (q - quit, r - send message, c - send connect message to PH, l - send listen message to PH, m - query for messages):\n");
 
             scanf("%s", input);
@@ -88,12 +78,6 @@ int main (int argc, char *argv[]) {
                 done = true;
             else if (input[0] == 'c') {
                 if(!sentJoinMessage) {
-                    //char joinMsg[200];
-                    //memset(joinMsg, '\0', 200);
-                    //sprintf(joinMsg, "Join %s", clientName);
-                    //testMsg = new Message(Message_Speak, joinMsg, strlen(joinMsg), messagesSent++, clientName, serverName);
-                    //myNL->sendMessage(testMsg);
-
                     testMsg = createConnectToServerMessage(serverName, clientName, 2666);
                     isServer = false;
                     myNL->sendMessage(testMsg);
