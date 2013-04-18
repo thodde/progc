@@ -61,12 +61,10 @@ Launch the StartupLayers.sh script with:
                 C is the port the data link layer will transmit data to the physical layer on(Must be the same as C from previous command)
                     valid entries are integers: 1025-66535
         
-        ./ChatClient.exe E F D
+        ./ChatClient.exe E  D
             Where:
                 E is the IP Address of the server machine.
                     Supports hostname or IP address of the server machine
-                F is the port of the server machine
-                    valid entries are integers: 1025-66535
                 D is the port the data link layer is listening on (Must be the same as D from previous command)
                     valid entries are integers: 1025-66535
 
@@ -85,12 +83,10 @@ Launch the StartupLayers.sh script with:
         Forcibly remove a user from the chat room by specifying their username.
         Example:
             kick James
-                    
 **  speak    
         Send a message to all users in the chat room.
         Example:
             speak Hello fellow chat room users!
-
 **  whisper
         Send a message to a single user.  No other users in the chat room will be able
         to see this message.  It is exclusive to you and the recipient.
@@ -104,7 +100,6 @@ Launch the StartupLayers.sh script with:
 	Allows the users to exchange files.
 	Example:
 		sendfile /home/Desktop/test.txt
-
 **  quit
         Allow a user to gracefully exit the chat room.
         Example:
@@ -112,8 +107,11 @@ Launch the StartupLayers.sh script with:
  
 ***Extras***
 
-*** Default Values
+ Default Values
 
         Physical layer listening port - 2001
         Data link layer listening port - 2002
-
+Changes
+       1)  We removed the admin command and the op flag.  Anyone can kick a user.
+       2)  We did not use a Go-Back-N sliding window, instead we decided to
+           implement a selective repeat sliding sliding window.
